@@ -36,6 +36,23 @@ public class Limelight extends SubsystemBase {
     }
 
     public double getEstimatedDistance() {
-        return 3.494*Math.pow(Math.tan(Math.toRadians(Constants.vision.Vis_LLAngle+getYAngle())));
+        return 3.494*Math.pow(Math.tan(Math.toRadians(Constants.VisionConstants.Vis_LLAngle+getYAngle())), -1);
+    }
+
+    void debug(){
+
+        SmartDashboard.putNumber(getName() + " X Angle", getXAngle());
+        SmartDashboard.putNumber(getName() + " Y Angle", getYAngle());
+        SmartDashboard.putNumber(getName() + " EQ pow 1", getYAngle()*.00605);
+        SmartDashboard.putNumber(getName() + " EQ pow 2", Math.pow(getYAngle(), 2)*.00146);
+        SmartDashboard.putNumber(getName() + " EQ pow 3", Math.pow(getYAngle(), 3)*.000348);
+        SmartDashboard.putNumber(getName() + " Distance", getEstimatedDistance());
+    }
+
+    @Override
+    public void periodic() {
+        if(getCurrentCommand() == null) {
+            setLights(true);
+        }
     }
 }

@@ -26,4 +26,21 @@ public final class Constants {
     
     public static final int kTrackWidth = 1;
   }
+
+  public static class VisionConstants {
+    public static final int pGain = 16;
+
+    public static final double VisX_kP = 1;
+    public static final double VisX_MAX = .3;
+    public static final double VisTimeLimit = 5;
+    public static final double VisX_Offset = 0;
+    public static final double VisX_Tol = 0;
+    public static final double VisY_Tol = 5;
+    public static final double VisY_distanceConstant = 254.3;
+    public static final double VisY_Offset = 8;
+    public static final double VisY_VTol = 100;
+    public static final double VisX_VTol = 100;
+    public static final int Vis_TimerConfidence = 5;
+    public static double Vis_LLAngle = 35;
+  }
 }
