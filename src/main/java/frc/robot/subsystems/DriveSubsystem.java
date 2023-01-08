@@ -9,12 +9,19 @@ import edu.wpi.first.wpilibj.motorcontrol.MotorControllerGroup;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.Constants;
+import com.revrobotics.RelativeEncoder;
+// import edu.wpi.first.math.controller.RamseteController;
 
 public class DriveSubsystem extends SubsystemBase {
     private final CANSparkMax frontLeftMotor = new CANSparkMax(Constants.DriveConstants.kFrontLeftMotorPort, MotorType.kBrushless);
     private final CANSparkMax frontRightMotor = new CANSparkMax(Constants.DriveConstants.kFrontRightMotorPort, MotorType.kBrushless);
     private final CANSparkMax backLeftMotor = new CANSparkMax(Constants.DriveConstants.kBackLeftMotorPort, MotorType.kBrushless);
     private final CANSparkMax backRightMotor = new CANSparkMax(Constants.DriveConstants.kBackRightMotorPort, MotorType.kBrushless);
+
+    private final RelativeEncoder frontLeftEncoder = frontLeftMotor.getEncoder();
+    private final RelativeEncoder frontRightEncoder = frontRightMotor.getEncoder();
+    private final RelativeEncoder backLeftEncoder = backLeftMotor.getEncoder();
+    private final RelativeEncoder backRightEncoder = backRightMotor.getEncoder();
 
     private final MotorControllerGroup leftMotors = new MotorControllerGroup(frontLeftMotor, backLeftMotor);
     private final MotorControllerGroup rightMotors = new MotorControllerGroup(frontRightMotor, backRightMotor);
