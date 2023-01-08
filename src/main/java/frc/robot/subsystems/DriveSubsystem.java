@@ -1,49 +1,111 @@
+// A LOT OF THIS CODE WAS REFERENCED FROM 7034'S 2022 CODE
+// https://github.com/2BDetermined-7034/2022-Rapid-React
+
 package frc.robot.subsystems;
 
-import com.revrobotics.CANSparkMax;
-import com.revrobotics.CANSparkMaxLowLevel.MotorType;
+import com.kauailabs.navx.frc.AHRS;
+import com.revrobotics.*;
 
-import edu.wpi.first.wpilibj.ADXRS450_Gyro;
+import edu.wpi.first.math.MatBuilder;
+import edu.wpi.first.math.Nat;
+import edu.wpi.first.math.estimator.DifferentialDrivePoseEstimator;
+import edu.wpi.first.math.kinematics.DifferentialDriveOdometry;
+import edu.wpi.first.wpilibj.SPI;
 import edu.wpi.first.wpilibj.drive.DifferentialDrive;
-import edu.wpi.first.wpilibj.motorcontrol.MotorControllerGroup;
+import edu.wpi.first.math.geometry.Pose2d;
+import edu.wpi.first.math.geometry.Rotation2d;
+import edu.wpi.first.math.kinematics.ChassisSpeeds;
+import edu.wpi.first.math.kinematics.DifferentialDriveKinematics;
+import edu.wpi.first.math.kinematics.DifferentialDriveWheelSpeeds;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.Constants;
 import com.revrobotics.RelativeEncoder;
-// import edu.wpi.first.math.controller.RamseteController;
+
 
 public class DriveSubsystem extends SubsystemBase {
-    private final CANSparkMax frontLeftMotor = new CANSparkMax(Constants.DriveConstants.kFrontLeftMotorPort, MotorType.kBrushless);
-    private final CANSparkMax frontRightMotor = new CANSparkMax(Constants.DriveConstants.kFrontRightMotorPort, MotorType.kBrushless);
-    private final CANSparkMax backLeftMotor = new CANSparkMax(Constants.DriveConstants.kBackLeftMotorPort, MotorType.kBrushless);
-    private final CANSparkMax backRightMotor = new CANSparkMax(Constants.DriveConstants.kBackRightMotorPort, MotorType.kBrushless);
+    private final CANSparkMax frontLeft, frontRight, backLeft, backRight;
+    private final RelativeEncoder leftEnc, rightEnc;
 
-    private final RelativeEncoder frontLeftEncoder = frontLeftMotor.getEncoder();
-    private final RelativeEncoder frontRightEncoder = frontRightMotor.getEncoder();
-    private final RelativeEncoder backLeftEncoder = backLeftMotor.getEncoder();
-    private final RelativeEncoder backRightEncoder = backRightMotor.getEncoder();
+    private final AHRS gyro;
 
-    private final MotorControllerGroup leftMotors = new MotorControllerGroup(frontLeftMotor, backLeftMotor);
-    private final MotorControllerGroup rightMotors = new MotorControllerGroup(frontRightMotor, backRightMotor);
+    private final DifferentialDrive drive;
 
-    private final DifferentialDrive drive = new DifferentialDrive(leftMotors, rightMotors);
+    private final DifferentialDriveOdometry odometry;
+    DifferentialDriveKinematics kinematics;
 
-    private final ADXRS450_Gyro gyro = new ADXRS450_Gyro();
+    private double leftSpeed;
+    private double rightSpeed;
+
+    private double leftOffset;
+    private double rightOffset;
 
     public DriveSubsystem() {
-        super();
+        // Creates the motors
+        frontLeft = new CANSparkMax(Constants.DriveConstants.kFrontLeftMotorPort, CANSparkMaxLowLevel.MotorType.kBrushless);
+        frontRight = new CANSparkMax(Constants.DriveConstants.kFrontRightMotorPort, CANSparkMaxLowLevel.MotorType.kBrushless);
+        backLeft = new CANSparkMax(Constants.DriveConstants.kBackLeftMotorPort, CANSparkMaxLowLevel.MotorType.kBrushless);
+        backRight = new CANSparkMax(Constants.DriveConstants.kBackRightMotorPort, CANSparkMaxLowLevel.MotorType.kBrushless);
 
-        rightMotors.setInverted(true);
+        frontLeft.setInverted(false);
+        frontRight.setInverted(true);
+        backLeft.setInverted(false);
+        backRight.setInverted(true);
 
-        addChild("Drive", drive);
-        addChild("Gyro", gyro);
+        backLeft.follow(frontLeft);
+        backRight.follow(frontRight);
 
-        gyro.calibrate();
+        drive = new DifferentialDrive(frontLeft, frontRight);
+        kinematics = new DifferentialDriveKinematics(Constants.DriveConstants.kTrackWidth);
 
-        frontLeftMotor.setSmartCurrentLimit(40);
-        frontRightMotor.setSmartCurrentLimit(40);
-        backLeftMotor.setSmartCurrentLimit(40);
-        backRightMotor.setSmartCurrentLimit(40);
+        frontRight.setIdleMode(CANSparkMax.IdleMode.kBrake);
+        backRight.setIdleMode(CANSparkMax.IdleMode.kBrake);
+
+        frontLeft.setIdleMode(CANSparkMax.IdleMode.kBrake);
+        backLeft.setIdleMode(CANSparkMax.IdleMode.kBrake);
+
+        leftEnc = frontLeft.getEncoder();
+        rightEnc = frontRight.getEncoder();
+
+        // Creates the gyro
+        gyro = new AHRS(SPI.Port.kMXP);
+
+        odometry = new DifferentialDriveOdometry(getCurrentAngle());
+        resetEncoders();
+    }
+
+    public Pose2d getRobotPos() {
+        return odometry.getPoseMeters();
+    }
+
+    public DifferentialDriveWheelSpeeds getWheelVelocity() {
+        return new DifferentialDriveWheelSpeeds(leftEnc.getVelocity(), rightEnc.getVelocity());
+    }
+
+    public double getRightEncoderPosition() {
+        return rightEnc.getPosition();
+    }
+
+    public double getLeftEncoderPosition() {
+        return leftEnc.getPosition();
+    }
+
+    public Rotation2d getCurrentAngle() {
+        return Rotation2d.fromDegrees(gyro.getYaw());
+    }
+
+    public void resetEncoders() {
+        leftOffset = leftEnc.getPosition();
+        rightOffset = rightEnc.getPosition();
+    }
+
+    public void setRobotPos(Pose2d startingPose){
+        resetEncoders();
+        odometry.resetPosition(startingPose, getCurrentAngle());
+    }
+    
+    public DifferentialDriveKinematics getKinematics() {
+        return kinematics;
     }
 
     /**

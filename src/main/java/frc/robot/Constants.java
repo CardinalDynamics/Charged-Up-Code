@@ -23,5 +23,7 @@ public final class Constants {
     public static final int kFrontRightMotorPort = 1;
     public static final int kBackLeftMotorPort = 2;
     public static final int kBackRightMotorPort = 3;
+    
+    public static final int kTrackWidth = 1;
   }
 }
