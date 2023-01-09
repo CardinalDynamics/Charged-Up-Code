@@ -70,14 +70,22 @@ public class DriveSubsystem extends SubsystemBase {
         // Creates the gyro
         gyro = new AHRS(SPI.Port.kMXP);
 
-        odometry = new DifferentialDriveOdometry(getCurrentAngle());
+        odometry = new DifferentialDriveOdometry(getCurrentAngle(), leftOffset, rightOffset);
         resetEncoders();
     }
 
+    /**
+     * Gets the current position of the robot
+     * @return the current position of the robot
+     */
     public Pose2d getRobotPos() {
         return odometry.getPoseMeters();
     }
 
+    /** 
+     * Gets the current robot velocity
+     * @return the current robot velocity
+     */
     public DifferentialDriveWheelSpeeds getWheelVelocity() {
         return new DifferentialDriveWheelSpeeds(leftEnc.getVelocity(), rightEnc.getVelocity());
     }
@@ -101,7 +109,7 @@ public class DriveSubsystem extends SubsystemBase {
 
     public void setRobotPos(Pose2d startingPose){
         resetEncoders();
-        odometry.resetPosition(startingPose, getCurrentAngle());
+        odometry.resetPosition(getCurrentAngle(), leftOffset, rightOffset, startingPose);
     }
     
     public DifferentialDriveKinematics getKinematics() {
@@ -134,6 +142,13 @@ public class DriveSubsystem extends SubsystemBase {
     public void arcadeDrive(double speed, double rotation) {
         // This is the method that will be used to drive the robot
         drive.arcadeDrive(speed, rotation);
+    }
+
+    public void voltageDrive(ChassisSpeeds speeds) {
+        DifferentialDriveWheelSpeeds wheelSpeeds = kinematics.toWheelSpeeds(speeds);
+        frontLeft.setVoltage(wheelSpeeds.leftMetersPerSecond);
+        frontRight.setVoltage(wheelSpeeds.rightMetersPerSecond);
+        drive.feed();
     }
 
     public void resetGyro() {
