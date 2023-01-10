@@ -4,19 +4,19 @@
 
 package frc.robot;
 
-import frc.robot.Constants.OperatorConstants;
-import frc.robot.commands.Autos;
-import frc.robot.commands.ExampleCommand;
-import frc.robot.subsystems.ExampleSubsystem;
-import edu.wpi.first.wpilibj2.command.Command;
-import edu.wpi.first.wpilibj2.command.RunCommand;
-import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
-import edu.wpi.first.wpilibj2.command.button.Trigger;
-import frc.robot.subsystems.DriveSubsystem;
-import frc.robot.Constants;
+import edu.wpi.first.wpilibj.GenericHID;
 import edu.wpi.first.wpilibj.XboxController;
-import edu.wpi.first.wpilibj.shuffleboard.Shuffleboard;
 import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
+import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
+import edu.wpi.first.wpilibj2.command.RamseteCommand;
+import edu.wpi.first.wpilibj2.command.WaitCommand;
+import frc.robot.Constants.*;
+import frc.robot.commands.auto.*;
+import frc.robot.commands.drive.*;
+import frc.robot.subsystems.*;
+import edu.wpi.first.wpilibj2.command.Command;
+
+import java.util.List;
 
 /**
  * This class is where the bulk of the robot should be declared. Since Command-based is a
@@ -25,21 +25,19 @@ import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
  * subsystems, commands, and trigger mappings) should be declared here.
  */
 public class RobotContainer {
-  // The robot's subsystems and commands are defined here...
-  private final ExampleSubsystem m_exampleSubsystem = new ExampleSubsystem();
-  private final DriveSubsystem m_driveSubsystem = new DriveSubsystem();
+  // Controllers
+  public final XboxController driverController = new XboxController(Constants.OperatorConstants.kDriveControllerPort);
+  public final XboxController operatorController = new XboxController(Constants.OperatorConstants.kOperatorControllerPort);
 
-  private final SendableChooser<Command> m_chooser = new SendableChooser<>();
+  SendableChooser<Command> chooser;
 
-  // Replace with CommandPS4Controller or CommandJoystick if needed
-  private final CommandXboxController m_driverController =
-      new CommandXboxController(OperatorConstants.kDriveControllerPort);
-  private final CommandXboxController m_operatorController =
-      new CommandXboxController(OperatorConstants.kOperatorControllerPort);
+  // Subsystems
+  private final DriveSubsystem drive = new DriveSubsystem();
+  private final Limelight limelight = new Limelight();
 
   /** The container for the robot. Contains subsystems, OI devices, and commands. */
   public RobotContainer() {
-    m_driveSubsystem.setDefaultCommand(
+    drive.setDefaultCommand(
       new RunCommand(
         () -> m_driveSubsystem.tankDrive(
           m_driverController.getLeftY(),
@@ -78,6 +76,6 @@ public class RobotContainer {
    */
   public Command getAutonomousCommand() {
     // An example command will be run in autonomous
-    return Autos.exampleAuto(m_exampleSubsystem);
+    return ComplexAuto.exampleAuto(m_exampleSubsystem);
   }
 }

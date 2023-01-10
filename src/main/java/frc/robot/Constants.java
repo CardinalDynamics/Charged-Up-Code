@@ -33,6 +33,16 @@ public final class Constants {
 
     public static final double maxVelocity = 1;
     public static final double maxAcceleration = 1;
+
+    // Ramsete constants
+    public static final double b = 2;
+    public static final double zeta = 0.7;
+
+    // drivebase tuning
+    public static final double ksVolts = 0.16302;
+    public static final double kvVoltSecondsPerMeter = 2.8008; //7.2507
+    public static final double kaVoltSecondsSquaredPerMeter = 0.36623;
+    public static final double kPDriveVel = 0;// 3.5796
   }
 
   public static class VisionConstants {

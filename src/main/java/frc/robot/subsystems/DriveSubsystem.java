@@ -151,6 +151,12 @@ public class DriveSubsystem extends SubsystemBase {
         drive.feed();
     }
 
+    public void tankDriveVolts(double leftVolts, double rightVolts) {
+        frontLeft.setVoltage(leftVolts);
+        frontRight.setVoltage(rightVolts);
+        drive.feed();
+    }
+
     public void resetGyro() {
         // Resets the gyro to 0 degrees
         gyro.reset();
