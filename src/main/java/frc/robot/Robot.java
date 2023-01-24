@@ -5,8 +5,20 @@
 package frc.robot;
 
 import edu.wpi.first.wpilibj.TimedRobot;
-import edu.wpi.first.wpilibj2.command.Command;
-import edu.wpi.first.wpilibj2.command.CommandScheduler;
+import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
+import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
+
+import com.revrobotics.CANSparkMax;
+import com.revrobotics.CANSparkMaxLowLevel.MotorType;
+import com.revrobotics.CANSparkMax.IdleMode;
+import edu.wpi.first.wpilibj.drive.DifferentialDrive;
+import edu.wpi.first.wpilibj.XboxController;
+
+import edu.wpi.first.cameraserver.CameraServer;
+
+import edu.wpi.first.networktables.NetworkTable;
+import edu.wpi.first.networktables.NetworkTableInstance;
+import edu.wpi.first.networktables.NetworkTableEntry;
 
 /**
  * The VM is configured to automatically run this class, and to call the functions corresponding to
@@ -15,9 +27,26 @@ import edu.wpi.first.wpilibj2.command.CommandScheduler;
  * project.
  */
 public class Robot extends TimedRobot {
-  private Command m_autonomousCommand;
+  private static final String kDefaultAuto = "Default";
+  private static final String kCustomAuto = "My Auto";
+  private String m_autoSelected;
+  private final SendableChooser<String> m_chooser = new SendableChooser<>();
 
-  private RobotContainer m_robotContainer;
+  private final CANSparkMax m_left1 = new CANSparkMax(1, MotorType.kBrushless);
+  private final CANSparkMax m_left2 = new CANSparkMax(2, MotorType.kBrushless);
+  private final CANSparkMax m_right1 = new CANSparkMax(3, MotorType.kBrushless);
+  private final CANSparkMax m_right2 = new CANSparkMax(4, MotorType.kBrushless);
+
+  private final DifferentialDrive m_drive = new DifferentialDrive(m_left1, m_right1);
+
+  private final NetworkTable table = NetworkTableInstance.getDefault().getTable("limelight");
+  private final NetworkTableEntry tx = table.getEntry("tx");
+  private final NetworkTableEntry ty = table.getEntry("ty");
+  private final NetworkTableEntry ta = table.getEntry("ta");
+
+  private final XboxController m_controller = new XboxController(0);
+
+  private boolean driveMode = false;
 
   /**
    * This function is run when the robot is first started up and should be used for any
@@ -25,9 +54,33 @@ public class Robot extends TimedRobot {
    */
   @Override
   public void robotInit() {
-    // Instantiate our RobotContainer.  This will perform all our button bindings, and put our
-    // autonomous chooser on the dashboard.
-    m_robotContainer = new RobotContainer();
+    m_chooser.setDefaultOption("Default Auto", kDefaultAuto);
+    m_chooser.addOption("My Auto", kCustomAuto);
+    SmartDashboard.putData("Auto choices", m_chooser);
+
+    m_left1.restoreFactoryDefaults();
+    m_left2.restoreFactoryDefaults();
+    m_right1.restoreFactoryDefaults();
+    m_right2.restoreFactoryDefaults();
+
+    m_left1.setIdleMode(IdleMode.kCoast);
+    m_left2.setIdleMode(IdleMode.kCoast);
+    m_right1.setIdleMode(IdleMode.kCoast);
+    m_right2.setIdleMode(IdleMode.kCoast);
+
+    m_left1.setSmartCurrentLimit(80);
+    m_left2.setSmartCurrentLimit(80);
+    m_right1.setSmartCurrentLimit(80);
+    m_right2.setSmartCurrentLimit(80);
+
+    m_left2.follow(m_left1);
+    m_right2.follow(m_right1);
+
+    m_right1.setInverted(true);
+    m_right2.setInverted(true);
+
+    CameraServer.startAutomaticCapture("drive", 0);
+    CameraServer.startAutomaticCapture("manipulator", 1);
   }
 
   /**
@@ -39,55 +92,77 @@ public class Robot extends TimedRobot {
    */
   @Override
   public void robotPeriodic() {
-    // Runs the Scheduler.  This is responsible for polling buttons, adding newly-scheduled
-    // commands, running already-scheduled commands, removing finished or interrupted commands,
-    // and running subsystem periodic() methods.  This must be called from the robot's periodic
-    // block in order for anything in the Command-based framework to work.
-    CommandScheduler.getInstance().run();
+    double x = tx.getDouble(0.0);
+    double y = ty.getDouble(0.0);
+    double area = ta.getDouble(0.0);
+
+    SmartDashboard.putNumber("LimelightX", x);
+    SmartDashboard.putNumber("LimelightY", y);
+    SmartDashboard.putNumber("LimelightArea", area);
+
+    if (m_controller.getAButton()) {
+      driveMode =! driveMode;
+    }
   }
 
-  /** This function is called once each time the robot enters Disabled mode. */
-  @Override
-  public void disabledInit() {}
-
-  @Override
-  public void disabledPeriodic() {}
-
-  /** This autonomous runs the autonomous command selected by your {@link RobotContainer} class. */
+  /**
+   * This autonomous (along with the chooser code above) shows how to select between different
+   * autonomous modes using the dashboard. The sendable chooser code works with the Java
+   * SmartDashboard. If you prefer the LabVIEW Dashboard, remove all of the chooser code and
+   * uncomment the getString line to get the auto name from the text box below the Gyro
+   *
+   * <p>You can add additional auto modes by adding additional comparisons to the switch structure
+   * below with additional strings. If using the SendableChooser make sure to add them to the
+   * chooser code above as well.
+   */
   @Override
   public void autonomousInit() {
-    m_autonomousCommand = m_robotContainer.getAutonomousCommand();
-
-    // schedule the autonomous command (example)
-    if (m_autonomousCommand != null) {
-      m_autonomousCommand.schedule();
-    }
+    m_autoSelected = m_chooser.getSelected();
+    // m_autoSelected = SmartDashboard.getString("Auto Selector", kDefaultAuto);
+    System.out.println("Auto selected: " + m_autoSelected);
   }
 
   /** This function is called periodically during autonomous. */
   @Override
-  public void autonomousPeriodic() {}
-
-  @Override
-  public void teleopInit() {
-    // This makes sure that the autonomous stops running when
-    // teleop starts running. If you want the autonomous to
-    // continue until interrupted by another command, remove
-    // this line or comment it out.
-    if (m_autonomousCommand != null) {
-      m_autonomousCommand.cancel();
+  public void autonomousPeriodic() {
+    switch (m_autoSelected) {
+      case kCustomAuto:
+        // Put custom auto code here
+        break;
+      case kDefaultAuto:
+      default:
+        // Put default auto code here
+        break;
     }
   }
 
+  /** This function is called once when teleop is enabled. */
+  @Override
+  public void teleopInit() {}
+
   /** This function is called periodically during operator control. */
   @Override
-  public void teleopPeriodic() {}
-
-  @Override
-  public void testInit() {
-    // Cancels all running commands at the start of test mode.
-    CommandScheduler.getInstance().cancelAll();
+  public void teleopPeriodic() {
+    
+    while (driveMode == true) {
+      m_drive.arcadeDrive(m_controller.getLeftY(), m_controller.getLeftX());
+    } 
+    while (driveMode == false) {
+      m_drive.tankDrive(-m_controller.getLeftY(), m_controller.getRightY());
+    }
   }
+
+  /** This function is called once when the robot is disabled. */
+  @Override
+  public void disabledInit() {}
+
+  /** This function is called periodically when disabled. */
+  @Override
+  public void disabledPeriodic() {}
+
+  /** This function is called once when test mode is enabled. */
+  @Override
+  public void testInit() {}
 
   /** This function is called periodically during test mode. */
   @Override
