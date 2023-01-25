@@ -46,7 +46,7 @@ public class Robot extends TimedRobot {
 
   private final XboxController m_controller = new XboxController(0);
 
-  private boolean driveMode = false;
+  private boolean driveMode;
 
   /**
    * This function is run when the robot is first started up and should be used for any
@@ -81,6 +81,8 @@ public class Robot extends TimedRobot {
 
     CameraServer.startAutomaticCapture("drive", 0);
     CameraServer.startAutomaticCapture("manipulator", 1);
+
+    driveMode = true;
   }
 
   /**
