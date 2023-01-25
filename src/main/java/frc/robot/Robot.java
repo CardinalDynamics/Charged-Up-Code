@@ -100,9 +100,11 @@ public class Robot extends TimedRobot {
     SmartDashboard.putNumber("LimelightY", y);
     SmartDashboard.putNumber("LimelightArea", area);
 
-    if (m_controller.getAButton()) {
+    if (m_controller.getAButtonPressed()) {
       driveMode =! driveMode;
     }
+
+    SmartDashboard.putBoolean("Drive Mode", driveMode);
   }
 
   /**
@@ -144,11 +146,10 @@ public class Robot extends TimedRobot {
   @Override
   public void teleopPeriodic() {
     
-    while (driveMode == true) {
-      m_drive.arcadeDrive(m_controller.getLeftY(), m_controller.getLeftX());
-    } 
-    while (driveMode == false) {
-      m_drive.tankDrive(-m_controller.getLeftY(), m_controller.getRightY());
+    if (driveMode == true) {
+      m_drive.arcadeDrive(-m_controller.getLeftY(), -m_controller.getLeftX());
+    } else if (driveMode == false) {
+      m_drive.tankDrive(-m_controller.getLeftY(), -m_controller.getRightY());
     }
   }
 
