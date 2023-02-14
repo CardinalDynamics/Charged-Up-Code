@@ -63,6 +63,9 @@ public class Robot extends TimedRobot {
 
   private boolean driveMode;
 
+  private SlewRateLimiter rateLimit1 = new SlewRateLimiter(1);
+  private SlewRateLimiter rateLimit2 = new SlewRateLimiter(1);
+
   /**
    * This function is run when the robot is first started up and should be used for any
    * initialization code.
@@ -96,6 +99,9 @@ public class Robot extends TimedRobot {
 
     m_right1.setInverted(true);
     m_right2.setInverted(true);
+    m_arm.setInverted(true);
+
+    
 
     CameraServer.startAutomaticCapture("drive", 0);
     CameraServer.startAutomaticCapture("manipulator", 1);
@@ -169,17 +175,17 @@ public class Robot extends TimedRobot {
   public void teleopPeriodic() {
     
     if (driveMode == true) {
-      m_drive.arcadeDrive(-m_controller.getLeftY(), -m_controller.getLeftX());
+      m_drive.arcadeDrive(-rateLimit1.calculate(m_controller.getLeftY()), m_controller.getLeftX());
     } else if (driveMode == false) {
-      m_drive.tankDrive(-m_controller.getLeftY(), -m_controller.getRightY());
+      m_drive.tankDrive(-rateLimit1.calculate(m_controller.getLeftY()), -rateLimit2.calculate(m_controller.getRightY()));
     }
 
     if (m_operator.getLeftBumperPressed()) {
-      m_arm.setVoltage(0.5);
+      m_arm.setVoltage(-2);
     } else if (m_operator.getRightBumperPressed()) {
-      m_arm.setVoltage(-0.5);
+      m_arm.setVoltage(4);
     } else {
-      m_arm.setVoltage(0);
+      m_arm.setVoltage(0.55);
     }
   }
 
