@@ -20,6 +20,10 @@ import edu.wpi.first.networktables.NetworkTable;
 import edu.wpi.first.networktables.NetworkTableInstance;
 import edu.wpi.first.networktables.NetworkTableEntry;
 
+import edu.wpi.first.wpilibj.Compressor;
+import edu.wpi.first.wpilibj.DoubleSolenoid;
+import edu.wpi.first.wpilibj.PneumaticsModuleType;
+
 /**
  * The VM is configured to automatically run this class, and to call the functions corresponding to
  * each mode, as described in the TimedRobot documentation. If you change the name of this class or
@@ -37,6 +41,8 @@ public class Robot extends TimedRobot {
   private final CANSparkMax m_right1 = new CANSparkMax(3, MotorType.kBrushless);
   private final CANSparkMax m_right2 = new CANSparkMax(4, MotorType.kBrushless);
 
+  private final CANSparkMax m_arm = new CANSparkMax(5, MotorType.kBrushless);
+
   private final DifferentialDrive m_drive = new DifferentialDrive(m_left1, m_right1);
 
   private final NetworkTable table = NetworkTableInstance.getDefault().getTable("limelight");
@@ -45,6 +51,13 @@ public class Robot extends TimedRobot {
   private final NetworkTableEntry ta = table.getEntry("ta");
 
   private final XboxController m_controller = new XboxController(0);
+  private final XboxController m_operator = new XboxController(1);
+
+  private final Compressor compressor = new Compressor(PneumaticsModuleType.REVPH);
+  private final DoubleSolenoid arm1 = new DoubleSolenoid(PneumaticsModuleType.REVPH, 0, 1);
+  private final DoubleSolenoid arm2 = new DoubleSolenoid(PneumaticsModuleType.REVPH, 2, 3);
+  private final DoubleSolenoid manip1 = new DoubleSolenoid(PneumaticsModuleType.REVPH, 4, 5);
+  private final DoubleSolenoid manip2 = new DoubleSolenoid(PneumaticsModuleType.REVPH, 6, 7);
 
   private boolean driveMode;
 
@@ -62,16 +75,19 @@ public class Robot extends TimedRobot {
     m_left2.restoreFactoryDefaults();
     m_right1.restoreFactoryDefaults();
     m_right2.restoreFactoryDefaults();
+    m_arm.restoreFactoryDefaults();
 
     m_left1.setIdleMode(IdleMode.kCoast);
     m_left2.setIdleMode(IdleMode.kCoast);
     m_right1.setIdleMode(IdleMode.kCoast);
     m_right2.setIdleMode(IdleMode.kCoast);
+    m_arm.setIdleMode(IdleMode.kBrake);
 
     m_left1.setSmartCurrentLimit(80);
     m_left2.setSmartCurrentLimit(80);
     m_right1.setSmartCurrentLimit(80);
     m_right2.setSmartCurrentLimit(80);
+    m_arm.setSmartCurrentLimit(80);
 
     m_left2.follow(m_left1);
     m_right2.follow(m_right1);
@@ -81,6 +97,8 @@ public class Robot extends TimedRobot {
 
     CameraServer.startAutomaticCapture("drive", 0);
     CameraServer.startAutomaticCapture("manipulator", 1);
+
+    compressor.enableDigital();
 
     driveMode = true;
   }
@@ -152,6 +170,14 @@ public class Robot extends TimedRobot {
       m_drive.arcadeDrive(-m_controller.getLeftY(), -m_controller.getLeftX());
     } else if (driveMode == false) {
       m_drive.tankDrive(-m_controller.getLeftY(), -m_controller.getRightY());
+    }
+
+    if (m_operator.getLeftBumperPressed()) {
+      m_arm.setVoltage(0.5);
+    } else if (m_operator.getRightBumperPressed()) {
+      m_arm.setVoltage(-0.5);
+    } else {
+      m_arm.setVoltage(0);
     }
   }
 
