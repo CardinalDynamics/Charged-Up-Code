@@ -13,7 +13,7 @@ import com.revrobotics.CANSparkMaxLowLevel.MotorType;
 import com.revrobotics.CANSparkMax.IdleMode;
 import edu.wpi.first.wpilibj.drive.DifferentialDrive;
 import edu.wpi.first.wpilibj.XboxController;
-
+import edu.wpi.first.wpilibj.DoubleSolenoid.Value;
 import edu.wpi.first.cameraserver.CameraServer;
 
 import edu.wpi.first.networktables.NetworkTable;
@@ -57,7 +57,6 @@ public class Robot extends TimedRobot {
 
   private final Compressor compressor = new Compressor(PneumaticsModuleType.REVPH);
   private final DoubleSolenoid arm1 = new DoubleSolenoid(PneumaticsModuleType.REVPH, 0, 1);
-  private final DoubleSolenoid arm2 = new DoubleSolenoid(PneumaticsModuleType.REVPH, 2, 3);
   private final DoubleSolenoid manip1 = new DoubleSolenoid(PneumaticsModuleType.REVPH, 4, 5);
   private final DoubleSolenoid manip2 = new DoubleSolenoid(PneumaticsModuleType.REVPH, 6, 7);
 
@@ -100,7 +99,7 @@ public class Robot extends TimedRobot {
     m_right1.setInverted(true);
     m_right2.setInverted(true);
     m_arm.setInverted(true);
-
+    arm1.set(Value.kReverse));
     
 
     CameraServer.startAutomaticCapture("drive", 0);
@@ -186,6 +185,16 @@ public class Robot extends TimedRobot {
       m_arm.setVoltage(4);
     } else {
       m_arm.setVoltage(0.55);
+    }
+    
+    if (m_operator.getAButton()) {
+      arm1.toggle();
+    }
+    if (m_operator.getBButton()) {
+      manip1.toggle();
+    }
+    if (m_operator.getXButton()) {
+      manip2.toggle();
     }
   }
 
