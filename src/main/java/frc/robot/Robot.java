@@ -4,7 +4,7 @@
 
 package frc.robot;
 
-import com.kauailabs.navx.frc.AHRS;
+// import com.kauailabs.navx.frc.AHRS;
 import com.revrobotics.CANSparkMax;
 import com.revrobotics.CANSparkMax.IdleMode;
 import com.revrobotics.CANSparkMaxLowLevel.MotorType;
@@ -14,11 +14,12 @@ import edu.wpi.first.math.filter.SlewRateLimiter;
 import edu.wpi.first.networktables.NetworkTable;
 import edu.wpi.first.networktables.NetworkTableEntry;
 import edu.wpi.first.networktables.NetworkTableInstance;
+import edu.wpi.first.wpilibj.AnalogGyro;
 import edu.wpi.first.wpilibj.Compressor;
 import edu.wpi.first.wpilibj.DoubleSolenoid;
 import edu.wpi.first.wpilibj.DoubleSolenoid.Value;
 import edu.wpi.first.wpilibj.PneumaticsModuleType;
-import edu.wpi.first.wpilibj.SPI.Port;
+// import edu.wpi.first.wpilibj.SPI.Port;
 import edu.wpi.first.wpilibj.TimedRobot;
 import edu.wpi.first.wpilibj.XboxController;
 import edu.wpi.first.wpilibj.drive.DifferentialDrive;
@@ -59,7 +60,8 @@ public class Robot extends TimedRobot {
   private final DoubleSolenoid arm2 = new DoubleSolenoid(PneumaticsModuleType.REVPH, 2, 3);
   private final DoubleSolenoid manip = new DoubleSolenoid(PneumaticsModuleType.REVPH, 14, 15);
 
-  private final AHRS navx = new AHRS(Port.kMXP);
+  // private final AHRS navx = new AHRS(Port.kMXP);
+  private final AnalogGyro gyro = new AnalogGyro(0);
 
   private boolean driveMode;
   private boolean armHold;
@@ -104,7 +106,7 @@ public class Robot extends TimedRobot {
     m_right2.setInverted(true);
     m_arm.setInverted(true);
 
-    navx.reset();
+    gyro.reset();
 
     
 
@@ -136,7 +138,8 @@ public class Robot extends TimedRobot {
     SmartDashboard.putNumber("LimelightY", y);
     SmartDashboard.putNumber("LimelightArea", area);
 
-    SmartDashboard.putNumber("NavX", navx.getAngle());
+    // SmartDashboard.putNumber("NavX", navx.getAngle());
+    SmartDashboard.putNumber("Gyro", gyro.getAngle());
 
     armVoltage = (m_arm.getBusVoltage() * m_arm.getAppliedOutput());
     SmartDashboard.putNumber("Arm Voltage", armVoltage);
@@ -145,7 +148,7 @@ public class Robot extends TimedRobot {
       driveMode =! driveMode;
     }
 
-    if (m_operator.getYButtonPressed()) {
+    if (m_operator.getLeftStickButtonPressed()) {
       armHold =! armHold;
     }
 
@@ -222,6 +225,12 @@ public class Robot extends TimedRobot {
       manip.set(Value.kForward);
     } else if (m_operator.getYButton()) {
       manip.set(Value.kReverse);
+    }
+
+    if (m_operator.getRightStickButtonPressed()) {
+      arm1.set(Value.kOff);
+      arm2.set(Value.kOff);
+      manip.set(Value.kOff);
     }
   }
 
