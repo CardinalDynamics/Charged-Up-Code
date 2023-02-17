@@ -4,27 +4,26 @@
 
 package frc.robot;
 
-import edu.wpi.first.wpilibj.TimedRobot;
-import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
-import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
-
+import com.kauailabs.navx.frc.AHRS;
 import com.revrobotics.CANSparkMax;
-import com.revrobotics.CANSparkMaxLowLevel.MotorType;
 import com.revrobotics.CANSparkMax.IdleMode;
-import edu.wpi.first.wpilibj.drive.DifferentialDrive;
-import edu.wpi.first.wpilibj.XboxController;
+import com.revrobotics.CANSparkMaxLowLevel.MotorType;
 
 import edu.wpi.first.cameraserver.CameraServer;
-
+import edu.wpi.first.math.filter.SlewRateLimiter;
 import edu.wpi.first.networktables.NetworkTable;
-import edu.wpi.first.networktables.NetworkTableInstance;
 import edu.wpi.first.networktables.NetworkTableEntry;
-
+import edu.wpi.first.networktables.NetworkTableInstance;
 import edu.wpi.first.wpilibj.Compressor;
 import edu.wpi.first.wpilibj.DoubleSolenoid;
+import edu.wpi.first.wpilibj.DoubleSolenoid.Value;
 import edu.wpi.first.wpilibj.PneumaticsModuleType;
-
-import edu.wpi.first.math.filter.SlewRateLimiter;
+import edu.wpi.first.wpilibj.SPI.Port;
+import edu.wpi.first.wpilibj.TimedRobot;
+import edu.wpi.first.wpilibj.XboxController;
+import edu.wpi.first.wpilibj.drive.DifferentialDrive;
+import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
+import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 
 /**
  * The VM is configured to automatically run this class, and to call the functions corresponding to
@@ -58,10 +57,14 @@ public class Robot extends TimedRobot {
   private final Compressor compressor = new Compressor(PneumaticsModuleType.REVPH);
   private final DoubleSolenoid arm1 = new DoubleSolenoid(PneumaticsModuleType.REVPH, 0, 1);
   private final DoubleSolenoid arm2 = new DoubleSolenoid(PneumaticsModuleType.REVPH, 2, 3);
-  private final DoubleSolenoid manip1 = new DoubleSolenoid(PneumaticsModuleType.REVPH, 4, 5);
-  private final DoubleSolenoid manip2 = new DoubleSolenoid(PneumaticsModuleType.REVPH, 6, 7);
+  private final DoubleSolenoid manip = new DoubleSolenoid(PneumaticsModuleType.REVPH, 14, 15);
+
+  private final AHRS navx = new AHRS(Port.kMXP);
 
   private boolean driveMode;
+  private boolean armHold;
+
+  private double armVoltage;
 
   private SlewRateLimiter rateLimit1 = new SlewRateLimiter(1);
   private SlewRateLimiter rateLimit2 = new SlewRateLimiter(1);
@@ -101,6 +104,8 @@ public class Robot extends TimedRobot {
     m_right2.setInverted(true);
     m_arm.setInverted(true);
 
+    navx.reset();
+
     
 
     CameraServer.startAutomaticCapture("drive", 0);
@@ -109,6 +114,9 @@ public class Robot extends TimedRobot {
     compressor.enableDigital();
 
     driveMode = true;
+    armHold = false;
+
+    
   }
 
   /**
@@ -128,8 +136,17 @@ public class Robot extends TimedRobot {
     SmartDashboard.putNumber("LimelightY", y);
     SmartDashboard.putNumber("LimelightArea", area);
 
+    SmartDashboard.putNumber("NavX", navx.getAngle());
+
+    armVoltage = (m_arm.getBusVoltage() * m_arm.getAppliedOutput());
+    SmartDashboard.putNumber("Arm Voltage", armVoltage);
+
     if (m_controller.getAButtonPressed()) {
       driveMode =! driveMode;
+    }
+
+    if (m_operator.getYButtonPressed()) {
+      armHold =! armHold;
     }
 
     SmartDashboard.putBoolean("Drive Mode", driveMode);
@@ -180,12 +197,31 @@ public class Robot extends TimedRobot {
       m_drive.tankDrive(-rateLimit1.calculate(m_controller.getLeftY()), -rateLimit2.calculate(m_controller.getRightY()));
     }
 
-    if (m_operator.getLeftBumperPressed()) {
+    if (m_operator.getLeftBumper()) {
       m_arm.setVoltage(-2);
-    } else if (m_operator.getRightBumperPressed()) {
-      m_arm.setVoltage(4);
-    } else {
-      m_arm.setVoltage(0.55);
+    } else if (m_operator.getRightBumper()) {
+      m_arm.setVoltage(1);
+    } else if (armHold == true) {
+      m_arm.setVoltage(0.5);
+    } else if (armHold == false) {
+      m_arm.setVoltage(0);
+    }
+
+    
+    // Prototype code for arm: A and B will extend both arm pistons
+    if (m_operator.getAButton()) {
+      arm1.set(Value.kForward);
+      arm2.set(Value.kForward);
+    } else if (m_operator.getBButton()) {
+      arm1.set(Value.kReverse);
+      arm2.set(Value.kReverse);
+    }
+
+    // Prototype code for manipulator: X will extend, Y will retract
+    if (m_operator.getXButton()) {
+      manip.set(Value.kForward);
+    } else if (m_operator.getYButton()) {
+      manip.set(Value.kReverse);
     }
   }
 
