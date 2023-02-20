@@ -12,10 +12,10 @@ import com.revrobotics.RelativeEncoder;
 
 import edu.wpi.first.cameraserver.CameraServer;
 import edu.wpi.first.math.filter.SlewRateLimiter;
-import edu.wpi.first.math.kinematics.DifferentialDriveOdometry;
-import edu.wpi.first.networktables.NetworkTable;
-import edu.wpi.first.networktables.NetworkTableEntry;
-import edu.wpi.first.networktables.NetworkTableInstance;
+// import edu.wpi.first.math.kinematics.DifferentialDriveOdometry;
+// import edu.wpi.first.networktables.NetworkTable;
+// import edu.wpi.first.networktables.NetworkTableEntry;
+// import edu.wpi.first.networktables.NetworkTableInstance;
 import edu.wpi.first.wpilibj.AnalogGyro;
 import edu.wpi.first.wpilibj.Compressor;
 import edu.wpi.first.wpilibj.DoubleSolenoid;
@@ -41,34 +41,46 @@ public class Robot extends TimedRobot {
   private String m_autoSelected;
   private final SendableChooser<String> m_chooser = new SendableChooser<>();
 
+  // public Drive drive;
+  public Vision vision;
+
+  // Motor Controllers
   private final CANSparkMax m_left1 = new CANSparkMax(1, MotorType.kBrushless);
   private final CANSparkMax m_left2 = new CANSparkMax(2, MotorType.kBrushless);
   private final CANSparkMax m_right1 = new CANSparkMax(3, MotorType.kBrushless);
   private final CANSparkMax m_right2 = new CANSparkMax(4, MotorType.kBrushless);
 
+  // left and right side encoders
   private final RelativeEncoder m_leftEncoder = m_left1.getEncoder();
   private final RelativeEncoder m_rightEncoder = m_right1.getEncoder();
 
+  // arm controller
   private final CANSparkMax m_arm = new CANSparkMax(5, MotorType.kBrushless);
 
+  // differential drive
   private final DifferentialDrive m_drive = new DifferentialDrive(m_left1, m_right1);
 
-  private final DifferentialDriveOdometry m_odometry;
+  // odometry
+  // private final DifferentialDriveOdometry m_odometry;
 
-  private final NetworkTable table = NetworkTableInstance.getDefault().getTable("limelight");
-  private final NetworkTableEntry tx = table.getEntry("tx");
-  private final NetworkTableEntry ty = table.getEntry("ty");
-  private final NetworkTableEntry ta = table.getEntry("ta");
+  // limelight stuff
+  // private final NetworkTable table = NetworkTableInstance.getDefault().getTable("limelight");
+  // private final NetworkTableEntry tx = table.getEntry("tx");
+  // private final NetworkTableEntry ty = table.getEntry("ty");
+  // private final NetworkTableEntry ta = table.getEntry("ta");
 
+  // controllers
   private final XboxController m_controller = new XboxController(0);
   private final XboxController m_operator = new XboxController(1);
 
+  // pneumatics
   private final Compressor compressor = new Compressor(PneumaticsModuleType.REVPH);
   private final DoubleSolenoid arm1 = new DoubleSolenoid(PneumaticsModuleType.REVPH, 10, 11);
   private final DoubleSolenoid arm2 = new DoubleSolenoid(PneumaticsModuleType.REVPH, 12, 13);
   private final DoubleSolenoid manip = new DoubleSolenoid(PneumaticsModuleType.REVPH, 14, 15);
   private final PneumaticHub hub = new PneumaticHub();
 
+  // gyros
   // private final AHRS navx = new AHRS(Port.kMXP);
   private final AnalogGyro gyro = new AnalogGyro(0);
 
@@ -76,7 +88,9 @@ public class Robot extends TimedRobot {
   private boolean armHold;
 
   private double armVoltage;
+  private double armMotor;
 
+  // rate limiters
   private SlewRateLimiter rateLimit1 = new SlewRateLimiter(1);
   private SlewRateLimiter rateLimit2 = new SlewRateLimiter(1);
 
@@ -90,12 +104,19 @@ public class Robot extends TimedRobot {
     m_chooser.addOption("My Auto", kCustomAuto);
     SmartDashboard.putData("Auto choices", m_chooser);
 
+    // drive = new Drive();
+    vision = new Vision();
+
+
+
+    // set up motors
     m_left1.restoreFactoryDefaults();
     m_left2.restoreFactoryDefaults();
     m_right1.restoreFactoryDefaults();
     m_right2.restoreFactoryDefaults();
     m_arm.restoreFactoryDefaults();
 
+    // set motor idle mode
     m_left1.setIdleMode(IdleMode.kCoast);
     m_left2.setIdleMode(IdleMode.kCoast);
     m_right1.setIdleMode(IdleMode.kCoast);
@@ -129,7 +150,7 @@ public class Robot extends TimedRobot {
     driveMode = true;
     armHold = false;
 
-    m_odometry = new DifferentialDriveOdometry();
+    // m_odometry = new DifferentialDriveOdometry();
   }
 
   /**
@@ -141,19 +162,20 @@ public class Robot extends TimedRobot {
    */
   @Override
   public void robotPeriodic() {
-    double x = tx.getDouble(0.0);
-    double y = ty.getDouble(0.0);
-    double area = ta.getDouble(0.0);
+    // double x = tx.getDouble(0.0);
+    // double y = ty.getDouble(0.0);
+    // double area = ta.getDouble(0.0);
 
-    SmartDashboard.putNumber("LimelightX", x);
-    SmartDashboard.putNumber("LimelightY", y);
-    SmartDashboard.putNumber("LimelightArea", area);
+    // SmartDashboard.putNumber("LimelightX", x);
+    // SmartDashboard.putNumber("LimelightY", y);
+    // SmartDashboard.putNumber("LimelightArea", area);
 
     // SmartDashboard.putNumber("NavX", navx.getAngle());
     SmartDashboard.putNumber("Gyro", gyro.getAngle());
 
     armVoltage = (m_arm.getBusVoltage() * m_arm.getAppliedOutput());
     SmartDashboard.putNumber("Arm Voltage", armVoltage);
+    SmartDashboard.putNumber("arm motor", armMotor);
 
     SmartDashboard.putBoolean("Drive Mode", driveMode);
     SmartDashboard.putBoolean("Arm Hold", armHold);
@@ -187,7 +209,7 @@ public class Robot extends TimedRobot {
     // m_autoSelected = SmartDashboard.getString("Auto Selector", kDefaultAuto);
     System.out.println("Auto selected: " + m_autoSelected);
 
-    m_odometry.resetPosition(gyro.getAngle(), m_leftEncoder.getPosition(), m_rightEncoder.getPosition());
+    // m_odometry.resetPosition(gyro.getAngle(), m_leftEncoder.getPosition(), m_rightEncoder.getPosition());
   }
 
   /** This function is called periodically during autonomous. */
@@ -212,22 +234,25 @@ public class Robot extends TimedRobot {
   @Override
   public void teleopPeriodic() {
     
+    double dist = vision.estimateDistance();
+    
+    
     if (driveMode == true) {
       m_drive.arcadeDrive(-rateLimit1.calculate(m_controller.getLeftY()), m_controller.getLeftX());
     } else if (driveMode == false) {
       m_drive.tankDrive(-rateLimit1.calculate(m_controller.getLeftY()), -rateLimit2.calculate(m_controller.getRightY()));
     }
 
-    if (m_operator.getLeftBumper()) {
-      m_arm.setVoltage(-2);
-    } else if (m_operator.getRightBumper()) {
-      m_arm.setVoltage(1);
-    } else if (armHold == true) {
-      m_arm.setVoltage(0.5);
-    } else if (armHold == false) {
-      m_arm.setVoltage(0);
-    }
-
+    // if (m_operator.getLeftBumper()) {
+    //   m_arm.setVoltage(-2);
+    // } else if (m_operator.getRightBumper()) {
+    //   m_arm.setVoltage(1);
+    // } else if (armHold == true) {
+    //   m_arm.setVoltage(0.5);
+    // } else if (armHold == false) {
+    //   m_arm.setVoltage(0);
+    // }
+    m_arm.setVoltage(1);
     
     // Prototype code for arm: A and B will extend both arm pistons
     if (m_operator.getAButton()) {
