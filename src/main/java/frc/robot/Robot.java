@@ -8,9 +8,11 @@ package frc.robot;
 import com.revrobotics.CANSparkMax;
 import com.revrobotics.CANSparkMax.IdleMode;
 import com.revrobotics.CANSparkMaxLowLevel.MotorType;
+import com.revrobotics.RelativeEncoder;
 
 import edu.wpi.first.cameraserver.CameraServer;
 import edu.wpi.first.math.filter.SlewRateLimiter;
+import edu.wpi.first.math.kinematics.DifferentialDriveOdometry;
 import edu.wpi.first.networktables.NetworkTable;
 import edu.wpi.first.networktables.NetworkTableEntry;
 import edu.wpi.first.networktables.NetworkTableInstance;
@@ -18,6 +20,7 @@ import edu.wpi.first.wpilibj.AnalogGyro;
 import edu.wpi.first.wpilibj.Compressor;
 import edu.wpi.first.wpilibj.DoubleSolenoid;
 import edu.wpi.first.wpilibj.DoubleSolenoid.Value;
+import edu.wpi.first.wpilibj.PneumaticHub;
 import edu.wpi.first.wpilibj.PneumaticsModuleType;
 // import edu.wpi.first.wpilibj.SPI.Port;
 import edu.wpi.first.wpilibj.TimedRobot;
@@ -43,9 +46,14 @@ public class Robot extends TimedRobot {
   private final CANSparkMax m_right1 = new CANSparkMax(3, MotorType.kBrushless);
   private final CANSparkMax m_right2 = new CANSparkMax(4, MotorType.kBrushless);
 
+  private final RelativeEncoder m_leftEncoder = m_left1.getEncoder();
+  private final RelativeEncoder m_rightEncoder = m_right1.getEncoder();
+
   private final CANSparkMax m_arm = new CANSparkMax(5, MotorType.kBrushless);
 
   private final DifferentialDrive m_drive = new DifferentialDrive(m_left1, m_right1);
+
+  private final DifferentialDriveOdometry m_odometry;
 
   private final NetworkTable table = NetworkTableInstance.getDefault().getTable("limelight");
   private final NetworkTableEntry tx = table.getEntry("tx");
@@ -56,9 +64,10 @@ public class Robot extends TimedRobot {
   private final XboxController m_operator = new XboxController(1);
 
   private final Compressor compressor = new Compressor(PneumaticsModuleType.REVPH);
-  private final DoubleSolenoid arm1 = new DoubleSolenoid(PneumaticsModuleType.REVPH, 0, 1);
-  private final DoubleSolenoid arm2 = new DoubleSolenoid(PneumaticsModuleType.REVPH, 2, 3);
+  private final DoubleSolenoid arm1 = new DoubleSolenoid(PneumaticsModuleType.REVPH, 10, 11);
+  private final DoubleSolenoid arm2 = new DoubleSolenoid(PneumaticsModuleType.REVPH, 12, 13);
   private final DoubleSolenoid manip = new DoubleSolenoid(PneumaticsModuleType.REVPH, 14, 15);
+  private final PneumaticHub hub = new PneumaticHub();
 
   // private final AHRS navx = new AHRS(Port.kMXP);
   private final AnalogGyro gyro = new AnalogGyro(0);
@@ -107,6 +116,8 @@ public class Robot extends TimedRobot {
     m_arm.setInverted(true);
 
     gyro.reset();
+    m_leftEncoder.setPosition(0);
+    m_rightEncoder.setPosition(0);
 
     
 
@@ -118,7 +129,7 @@ public class Robot extends TimedRobot {
     driveMode = true;
     armHold = false;
 
-    
+    m_odometry = new DifferentialDriveOdometry();
   }
 
   /**
@@ -143,6 +154,11 @@ public class Robot extends TimedRobot {
 
     armVoltage = (m_arm.getBusVoltage() * m_arm.getAppliedOutput());
     SmartDashboard.putNumber("Arm Voltage", armVoltage);
+
+    SmartDashboard.putBoolean("Drive Mode", driveMode);
+    SmartDashboard.putBoolean("Arm Hold", armHold);
+    SmartDashboard.putBoolean("Pressure Switch", hub.getPressureSwitch());
+    SmartDashboard.putNumber("Compressor Current", hub.getCompressorCurrent());
 
     if (m_controller.getAButtonPressed()) {
       driveMode =! driveMode;
@@ -170,6 +186,8 @@ public class Robot extends TimedRobot {
     m_autoSelected = m_chooser.getSelected();
     // m_autoSelected = SmartDashboard.getString("Auto Selector", kDefaultAuto);
     System.out.println("Auto selected: " + m_autoSelected);
+
+    m_odometry.resetPosition(gyro.getAngle(), m_leftEncoder.getPosition(), m_rightEncoder.getPosition());
   }
 
   /** This function is called periodically during autonomous. */
