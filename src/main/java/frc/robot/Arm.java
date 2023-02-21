@@ -58,4 +58,15 @@ public class Arm {
     public double getEncoderVelocity() {
         return this.arm.getEncoder().getVelocity();
     }
+
+    public void updatePIDValues(double P, double I, double D) {
+        this.pid.setP(P);
+        this.pid.setI(I);
+        this.pid.setD(D);
+    }
+
+    public double[] getPIDValues() {
+        double[] values = { this.pid.getP(), this.pid.getI(), this.pid.getD() };
+        return values;
+    }
 }

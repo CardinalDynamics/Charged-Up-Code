@@ -30,6 +30,8 @@ public class Robot extends TimedRobot {
   public Arm arm;
   public Pneumatics pneumatics;
 
+  public double[] armPID;
+
   // controllers
   private final XboxController m_controller = new XboxController(0);
   private final XboxController m_operator = new XboxController(1);
@@ -73,6 +75,7 @@ public class Robot extends TimedRobot {
   @Override
   public void robotPeriodic() {
 
+    armPID = arm.getPIDValues();
 
     // SmartDashboard.putNumber("NavX", navx.getAngle());
     SmartDashboard.putNumber("Gyro", gyro.getAngle());
@@ -89,6 +92,14 @@ public class Robot extends TimedRobot {
     }
 
     SmartDashboard.putNumber("Arm Angle", arm.getEncoderPosition());
+
+    SmartDashboard.putNumber("Arm P", armPID[0]);
+    SmartDashboard.putNumber("Arm I", armPID[1]);
+    SmartDashboard.putNumber("Arm D", armPID[2]);
+
+    arm.updatePIDValues(SmartDashboard.getNumber("Arm P", armPID[0]), SmartDashboard.getNumber("Arm I", armPID[1]), SmartDashboard.getNumber("Arm D", armPID[2]));
+
+
   }
 
   /**
