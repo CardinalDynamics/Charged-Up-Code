@@ -1,16 +1,16 @@
 package frc.robot;
 
-import frc.robot.Constants;
 import com.revrobotics.CANSparkMax;
-import com.revrobotics.CANSparkMax.IdleMode;
 import com.revrobotics.CANSparkMaxLowLevel.MotorType;
+import com.revrobotics.CANSparkMax.IdleMode;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
+import edu.wpi.first.wpilibj.drive.DifferentialDrive;
 
-public class Drive {
-    private boolean inverted;
+public class TankDrive {
     private CANSparkMax[] motors;
+    private DifferentialDrive drive;
 
-    public Drive() {
+    public TankDrive() {
         this.motors = new CANSparkMax[4];
         this.motors[0] = new CANSparkMax(Constants.frontLeftMotorPort, MotorType.kBrushless);
         this.motors[1] = new CANSparkMax(Constants.backLeftMotorPort, MotorType.kBrushless);
@@ -21,7 +21,7 @@ public class Drive {
         this.motors[1].restoreFactoryDefaults();
         this.motors[2].restoreFactoryDefaults();
         this.motors[3].restoreFactoryDefaults();
-        
+
         this.motors[0].setInverted(false);
         this.motors[1].setInverted(false);
         this.motors[2].setInverted(true);
@@ -32,48 +32,31 @@ public class Drive {
         this.motors[2].setIdleMode(IdleMode.kCoast);
         this.motors[3].setIdleMode(IdleMode.kCoast);
 
-        this.motors[0].follow(this.motors[1]);
-        this.motors[2].follow(this.motors[3]);
+        this.motors[1].follow(this.motors[0]);
+        this.motors[3].follow(this.motors[2]);
 
-        inverted = false;
         SmartDashboard.putNumber("Drive Current Limit", Constants.driveCurrentLimit);
+
+        this.drive = new DifferentialDrive(this.motors[0], this.motors[2]);
     }
 
-    public void invertDrive() {
-        inverted =! inverted;
-    }
-
-    public void updateSpeed(double drive, double turn) {
-        updateSpeedInternal(drive, turn, true);
-    }
-
-    public void updateAutoSpeed(double drive, double turn) {
-        updateSpeedInternal(drive, turn, false);
-    }
-
-    private void updateSpeedInternal(double drive, double turn, boolean useInverted) {
+    public void updateSpeedTank(double leftSpeed, double rightSpeed) {
         int limit = (int) Math.round(SmartDashboard.getNumber("Drive Current Limit", Constants.driveCurrentLimit));
         motors[0].setSmartCurrentLimit(limit);
         motors[1].setSmartCurrentLimit(limit);
         motors[2].setSmartCurrentLimit(limit);
         motors[3].setSmartCurrentLimit(limit);
-        
-        double[] speeds = new double[4];
-        if (useInverted && inverted) {
-            speeds[0] = 0 - drive - turn;
-            speeds[1] = 0 - drive - turn;
-            speeds[2] = 0 - drive + turn;
-            speeds[3] = 0 - drive + turn;
 
-        } else {
-            speeds[0] = 0 + drive - turn;
-            speeds[1] = 0 + drive - turn;
-            speeds[2] = 0 + drive + turn;
-            speeds[3] = 0 + drive + turn;
-        }
+        this.drive.tankDrive(leftSpeed, rightSpeed);
+    }
 
-        for (int i = 0; i < 4; ++i) {
-            this.motors[i].set(speeds[i]);
-        }
+    public void updateSpeedArcade(double speed, double turn) {
+        int limit = (int) Math.round(SmartDashboard.getNumber("Drive Current Limit", Constants.driveCurrentLimit));
+        motors[0].setSmartCurrentLimit(limit);
+        motors[1].setSmartCurrentLimit(limit);
+        motors[2].setSmartCurrentLimit(limit);
+        motors[3].setSmartCurrentLimit(limit);
+
+        this.drive.arcadeDrive(speed, turn);
     }
 }

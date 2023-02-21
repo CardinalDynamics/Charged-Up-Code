@@ -5,27 +5,11 @@
 package frc.robot;
 
 // import com.kauailabs.navx.frc.AHRS;
-import com.revrobotics.CANSparkMax;
-import com.revrobotics.CANSparkMax.IdleMode;
-import com.revrobotics.CANSparkMaxLowLevel.MotorType;
-import com.revrobotics.RelativeEncoder;
-
 import edu.wpi.first.cameraserver.CameraServer;
-import edu.wpi.first.math.filter.SlewRateLimiter;
-// import edu.wpi.first.math.kinematics.DifferentialDriveOdometry;
-// import edu.wpi.first.networktables.NetworkTable;
-// import edu.wpi.first.networktables.NetworkTableEntry;
-// import edu.wpi.first.networktables.NetworkTableInstance;
 import edu.wpi.first.wpilibj.AnalogGyro;
-import edu.wpi.first.wpilibj.Compressor;
-import edu.wpi.first.wpilibj.DoubleSolenoid;
 import edu.wpi.first.wpilibj.DoubleSolenoid.Value;
-import edu.wpi.first.wpilibj.PneumaticHub;
-import edu.wpi.first.wpilibj.PneumaticsModuleType;
-// import edu.wpi.first.wpilibj.SPI.Port;
 import edu.wpi.first.wpilibj.TimedRobot;
 import edu.wpi.first.wpilibj.XboxController;
-import edu.wpi.first.wpilibj.drive.DifferentialDrive;
 import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 
@@ -41,44 +25,14 @@ public class Robot extends TimedRobot {
   private String m_autoSelected;
   private final SendableChooser<String> m_chooser = new SendableChooser<>();
 
-  // public Drive drive;
+  public TankDrive tankDrive;
   public Vision vision;
-
-  // Motor Controllers
-  private final CANSparkMax m_left1 = new CANSparkMax(1, MotorType.kBrushless);
-  private final CANSparkMax m_left2 = new CANSparkMax(2, MotorType.kBrushless);
-  private final CANSparkMax m_right1 = new CANSparkMax(3, MotorType.kBrushless);
-  private final CANSparkMax m_right2 = new CANSparkMax(4, MotorType.kBrushless);
-
-  // left and right side encoders
-  private final RelativeEncoder m_leftEncoder = m_left1.getEncoder();
-  private final RelativeEncoder m_rightEncoder = m_right1.getEncoder();
-
-  // arm controller
-  private final CANSparkMax m_arm = new CANSparkMax(5, MotorType.kBrushless);
-
-  // differential drive
-  private final DifferentialDrive m_drive = new DifferentialDrive(m_left1, m_right1);
-
-  // odometry
-  // private final DifferentialDriveOdometry m_odometry;
-
-  // limelight stuff
-  // private final NetworkTable table = NetworkTableInstance.getDefault().getTable("limelight");
-  // private final NetworkTableEntry tx = table.getEntry("tx");
-  // private final NetworkTableEntry ty = table.getEntry("ty");
-  // private final NetworkTableEntry ta = table.getEntry("ta");
+  public Arm arm;
+  public Pneumatics pneumatics;
 
   // controllers
   private final XboxController m_controller = new XboxController(0);
   private final XboxController m_operator = new XboxController(1);
-
-  // pneumatics
-  private final Compressor compressor = new Compressor(PneumaticsModuleType.REVPH);
-  private final DoubleSolenoid arm1 = new DoubleSolenoid(PneumaticsModuleType.REVPH, 10, 11);
-  private final DoubleSolenoid arm2 = new DoubleSolenoid(PneumaticsModuleType.REVPH, 12, 13);
-  private final DoubleSolenoid manip = new DoubleSolenoid(PneumaticsModuleType.REVPH, 14, 15);
-  private final PneumaticHub hub = new PneumaticHub();
 
   // gyros
   // private final AHRS navx = new AHRS(Port.kMXP);
@@ -86,13 +40,6 @@ public class Robot extends TimedRobot {
 
   private boolean driveMode;
   private boolean armHold;
-
-  private double armVoltage;
-  private double armMotor;
-
-  // rate limiters
-  private SlewRateLimiter rateLimit1 = new SlewRateLimiter(1);
-  private SlewRateLimiter rateLimit2 = new SlewRateLimiter(1);
 
   /**
    * This function is run when the robot is first started up and should be used for any
@@ -104,53 +51,16 @@ public class Robot extends TimedRobot {
     m_chooser.addOption("My Auto", kCustomAuto);
     SmartDashboard.putData("Auto choices", m_chooser);
 
-    // drive = new Drive();
+    tankDrive = new TankDrive();
     vision = new Vision();
-
-
-
-    // set up motors
-    m_left1.restoreFactoryDefaults();
-    m_left2.restoreFactoryDefaults();
-    m_right1.restoreFactoryDefaults();
-    m_right2.restoreFactoryDefaults();
-    m_arm.restoreFactoryDefaults();
-
-    // set motor idle mode
-    m_left1.setIdleMode(IdleMode.kCoast);
-    m_left2.setIdleMode(IdleMode.kCoast);
-    m_right1.setIdleMode(IdleMode.kCoast);
-    m_right2.setIdleMode(IdleMode.kCoast);
-    m_arm.setIdleMode(IdleMode.kBrake);
-
-    m_left1.setSmartCurrentLimit(80);
-    m_left2.setSmartCurrentLimit(80);
-    m_right1.setSmartCurrentLimit(80);
-    m_right2.setSmartCurrentLimit(80);
-    m_arm.setSmartCurrentLimit(80);
-
-    m_left2.follow(m_left1);
-    m_right2.follow(m_right1);
-
-    m_right1.setInverted(true);
-    m_right2.setInverted(true);
-    m_arm.setInverted(true);
-
-    gyro.reset();
-    m_leftEncoder.setPosition(0);
-    m_rightEncoder.setPosition(0);
-
-    
+    arm = new Arm();
+    pneumatics = new Pneumatics();
 
     CameraServer.startAutomaticCapture("drive", 0);
     CameraServer.startAutomaticCapture("manipulator", 1);
 
-    compressor.enableDigital();
-
     driveMode = true;
     armHold = false;
-
-    // m_odometry = new DifferentialDriveOdometry();
   }
 
   /**
@@ -162,25 +72,13 @@ public class Robot extends TimedRobot {
    */
   @Override
   public void robotPeriodic() {
-    // double x = tx.getDouble(0.0);
-    // double y = ty.getDouble(0.0);
-    // double area = ta.getDouble(0.0);
 
-    // SmartDashboard.putNumber("LimelightX", x);
-    // SmartDashboard.putNumber("LimelightY", y);
-    // SmartDashboard.putNumber("LimelightArea", area);
 
     // SmartDashboard.putNumber("NavX", navx.getAngle());
     SmartDashboard.putNumber("Gyro", gyro.getAngle());
 
-    armVoltage = (m_arm.getBusVoltage() * m_arm.getAppliedOutput());
-    SmartDashboard.putNumber("Arm Voltage", armVoltage);
-    SmartDashboard.putNumber("arm motor", armMotor);
-
     SmartDashboard.putBoolean("Drive Mode", driveMode);
     SmartDashboard.putBoolean("Arm Hold", armHold);
-    SmartDashboard.putBoolean("Pressure Switch", hub.getPressureSwitch());
-    SmartDashboard.putNumber("Compressor Current", hub.getCompressorCurrent());
 
     if (m_controller.getAButtonPressed()) {
       driveMode =! driveMode;
@@ -236,45 +134,56 @@ public class Robot extends TimedRobot {
     
     double dist = vision.estimateDistance();
     
-    
     if (driveMode == true) {
-      m_drive.arcadeDrive(-rateLimit1.calculate(m_controller.getLeftY()), m_controller.getLeftX());
+      double leftSpeed = joystickResponse(m_controller.getLeftY());
+      double rightSpeed = joystickResponse(m_controller.getRightY());
+      tankDrive.updateSpeedTank(leftSpeed, rightSpeed);
     } else if (driveMode == false) {
-      m_drive.tankDrive(-rateLimit1.calculate(m_controller.getLeftY()), -rateLimit2.calculate(m_controller.getRightY()));
+      double leftSpeed = joystickResponse(m_controller.getLeftY());
+      double rightSpeed = joystickResponse(m_controller.getRightX());
+      tankDrive.updateSpeedArcade(leftSpeed, rightSpeed);
     }
 
-    // if (m_operator.getLeftBumper()) {
-    //   m_arm.setVoltage(-2);
-    // } else if (m_operator.getRightBumper()) {
-    //   m_arm.setVoltage(1);
-    // } else if (armHold == true) {
-    //   m_arm.setVoltage(0.5);
-    // } else if (armHold == false) {
-    //   m_arm.setVoltage(0);
-    // }
-    m_arm.setVoltage(1);
+    if (armHold == true) {
+      arm.updateArmPID(90);
+    } else if (armHold == false) {
+      arm.updateArm(joystickResponse(m_operator.getRightY()));
+    }
+    
     
     // Prototype code for arm: A and B will extend both arm pistons
     if (m_operator.getAButton()) {
-      arm1.set(Value.kForward);
-      arm2.set(Value.kForward);
+      pneumatics.setArm1(Value.kForward);
+      pneumatics.setArm2(Value.kForward);
     } else if (m_operator.getBButton()) {
-      arm1.set(Value.kReverse);
-      arm2.set(Value.kReverse);
+      pneumatics.setArm1(Value.kReverse);
+      pneumatics.setArm2(Value.kReverse);
     }
 
     // Prototype code for manipulator: X will extend, Y will retract
     if (m_operator.getXButton()) {
-      manip.set(Value.kForward);
+      pneumatics.setManipulator(Value.kForward);
     } else if (m_operator.getYButton()) {
-      manip.set(Value.kReverse);
+      pneumatics.setManipulator(Value.kReverse);
     }
 
     if (m_operator.getRightStickButtonPressed()) {
-      arm1.set(Value.kOff);
-      arm2.set(Value.kOff);
-      manip.set(Value.kOff);
+      pneumatics.setArm1(Value.kOff);
+      pneumatics.setArm2(Value.kOff);
+      pneumatics.setManipulator(Value.kOff);
     }
+  }
+
+  private double joystickResponse(double raw) {
+    double deadband = SmartDashboard.getNumber("Deadband", Constants.deadband);
+    double deadbanded = 0.0;
+    if (raw > deadband) {
+      deadbanded = raw - deadband;
+    } else if (raw < -deadband) {
+      deadbanded = raw + deadband;
+    }
+    double exponent = SmartDashboard.getNumber("Exponent", Constants.exponent) + 1;
+    return Math.pow(Math.abs(deadbanded), exponent) * Math.signum(deadbanded);
   }
 
   /** This function is called once when the robot is disabled. */
