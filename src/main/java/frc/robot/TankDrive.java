@@ -1,10 +1,11 @@
 package frc.robot;
 
 import com.revrobotics.CANSparkMax;
-import com.revrobotics.CANSparkMaxLowLevel.MotorType;
 import com.revrobotics.CANSparkMax.IdleMode;
-import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
+import com.revrobotics.CANSparkMaxLowLevel.MotorType;
+
 import edu.wpi.first.wpilibj.drive.DifferentialDrive;
+import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 
 public class TankDrive {
     private CANSparkMax[] motors;
@@ -22,10 +23,10 @@ public class TankDrive {
         this.motors[2].restoreFactoryDefaults();
         this.motors[3].restoreFactoryDefaults();
 
-        this.motors[0].setInverted(false);
-        this.motors[1].setInverted(false);
-        this.motors[2].setInverted(true);
-        this.motors[3].setInverted(true);
+        this.motors[0].setInverted(true);
+        this.motors[1].setInverted(true);
+        this.motors[2].setInverted(false);
+        this.motors[3].setInverted(false);
 
         this.motors[0].setIdleMode(IdleMode.kCoast);
         this.motors[1].setIdleMode(IdleMode.kCoast);

@@ -88,7 +88,7 @@ public class Robot extends TimedRobot {
       armHold =! armHold;
     }
 
-    SmartDashboard.putBoolean("Drive Mode", driveMode);
+    SmartDashboard.putNumber("Arm Angle", arm.getEncoderPosition());
   }
 
   /**
@@ -133,6 +133,7 @@ public class Robot extends TimedRobot {
   public void teleopPeriodic() {
     
     double dist = vision.estimateDistance();
+    SmartDashboard.putBoolean("In Placement Range", (dist > 0 && dist < 20));
     
     if (driveMode == true) {
       double leftSpeed = joystickResponse(m_controller.getLeftY());
@@ -145,25 +146,27 @@ public class Robot extends TimedRobot {
     }
 
     if (armHold == true) {
-      arm.updateArmPID(90);
+      arm.updateArmPID(Constants.setpoint);
     } else if (armHold == false) {
-      arm.updateArm(joystickResponse(m_operator.getRightY()));
+      arm.updateArm(m_operator.getLeftTriggerAxis());
+    } else if (m_operator.getLeftTriggerAxis() < .1) {
+      arm.resetArm();
     }
     
     
     // Prototype code for arm: A and B will extend both arm pistons
-    if (m_operator.getAButton()) {
+    if (m_operator.getRightBumper()) {
       pneumatics.setArm1(Value.kForward);
       pneumatics.setArm2(Value.kForward);
-    } else if (m_operator.getBButton()) {
+    } else if (m_operator.getLeftBumper()) {
       pneumatics.setArm1(Value.kReverse);
       pneumatics.setArm2(Value.kReverse);
     }
 
     // Prototype code for manipulator: X will extend, Y will retract
-    if (m_operator.getXButton()) {
+    if (m_operator.getRightTriggerAxis() >= .1) {
       pneumatics.setManipulator(Value.kForward);
-    } else if (m_operator.getYButton()) {
+    } else if (m_operator.getRightTriggerAxis() < .1) {
       pneumatics.setManipulator(Value.kReverse);
     }
 
@@ -174,6 +177,7 @@ public class Robot extends TimedRobot {
     }
   }
 
+  // iron riders
   private double joystickResponse(double raw) {
     double deadband = SmartDashboard.getNumber("Deadband", Constants.deadband);
     double deadbanded = 0.0;

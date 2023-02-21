@@ -16,11 +16,14 @@ public class Constants {
     public static final int armSolenoidPortB = 11;
     public static final int armSolenoidPortC = 12;
     public static final int armSolenoidPortD = 13;
-    public static final double kP = 0.1;
-    public static final double kI = 0.0;
-    public static final double kD = 0.0;
-    public static final double setpoint = 90.0;
+    public static final double armP = 1.0;
+    public static final double armI = 0.0;
+    public static final double armD = 0.0;
+    public static final double setpoint = 0.5;
+    public static final double defaultPosition = 0.0;
     public static final int armCurrentLimit = 80;
+    public static final double armMaxSpeed = 0.5;
+
 
     // Manipulator
     public static final int manipulatorSolenoidPortA = 14;
@@ -35,6 +38,10 @@ public class Constants {
     // Vision
     public static final double visionCameraAngle = 0.0;
     public static final double visionCameraHeight = 15.13 - 26.5; // target - camera
+    public static final double targetDistance = 18;
+    public static final double targetHeight = 15.13;
+    public static final double maxTurnSpeed = 0.2;
+    public static final double minTurnAngle = 0.3;
     
     // Pneumatics
     public static final int compressorPort = 0;

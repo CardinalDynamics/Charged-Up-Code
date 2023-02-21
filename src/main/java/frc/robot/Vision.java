@@ -36,5 +36,30 @@ public class Vision {
         SmartDashboard.putNumber("Estimated Distance", distance);
         return distance;
     }
+
+    public double distanceAssist() {
+        double distanceError = estimateDistance() - Constants.targetDistance;
+        if (!getHasTargets() || Math.abs(distanceError) < 0.5) {
+            SmartDashboard.putNumber("Distance Adjustment", 0);
+            return 0.0;
+        }
+        double adjustment = distanceError * 0.225;
+        adjustment = Math.min(Constants.maxTurnSpeed, Math.max(-Constants.maxTurnSpeed, adjustment));
+        SmartDashboard.putNumber("Distance Adjustment", adjustment);
+        return adjustment;
+    }
+
+    public double steeringAssist() {
+        double offset = getXAngleOffset() - Math.atan(12 / estimateDistance());
+        if (!getHasTargets() || Math.abs(offset) < Constants.minTurnAngle) {
+            SmartDashboard.putNumber("Turning Adjustment", 0);
+            return 0;
+        }
+        double adjustment = pidController.calculate(offset);
+        adjustment = Math.min(Constants.maxTurnSpeed, Math.max(-Constants.maxTurnSpeed, adjustment));
+        adjustment = pidController.atSetpoint() ? 0 : -adjustment;
+        SmartDashboard.putNumber("Turning Adjustment", adjustment);
+        return adjustment;
+    }
     
 }
