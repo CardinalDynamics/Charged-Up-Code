@@ -34,11 +34,7 @@ public class Arm {
         int limit = (int) Math.round(SmartDashboard.getNumber("Arm Current Limit", Constants.armCurrentLimit));
         arm.setSmartCurrentLimit(limit);
 
-        if (Math.abs(speed) > Constants.armMaxSpeed) {
-            this.speed = .5;
-        } else if (Math.abs(speed) <= Constants.armMaxSpeed) {
-            this.speed = speed;
-        }
+        this.speed = speed / 2;
 
         this.arm.set(this.speed);
     }
