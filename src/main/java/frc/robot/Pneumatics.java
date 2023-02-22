@@ -21,9 +21,6 @@ public class Pneumatics {
         this.compressor = new Compressor(Constants.moduleType);
 
         compressor.enableDigital();
-
-        SmartDashboard.putBoolean("Compressor Enabled", pneumaticHub.getCompressor());
-        SmartDashboard.putBoolean("Compressor Pressure Switch", pneumaticHub.getPressureSwitch());
     }
 
     public void setArm1(Value value) {
@@ -38,5 +35,8 @@ public class Pneumatics {
         manipulator.set(value);
     }
 
-    
+    public void updateDashboard() {
+        SmartDashboard.putBoolean("Pressure Switch", pneumaticHub.getPressureSwitch());
+        SmartDashboard.putBoolean("Compressor Enabled", compressor.isEnabled());
+    }
 }

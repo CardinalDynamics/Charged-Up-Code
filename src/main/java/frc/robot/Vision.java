@@ -4,6 +4,7 @@ import edu.wpi.first.math.controller.PIDController;
 import edu.wpi.first.networktables.NetworkTable;
 import edu.wpi.first.networktables.NetworkTableInstance;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
+import edu.wpi.first.cameraserver.CameraServer;
 
 public class Vision {
     public NetworkTable table;
@@ -14,6 +15,9 @@ public class Vision {
         pidController = new PIDController(0.1, 0, 0);
         pidController.setSetpoint(0);
         pidController.setTolerance(0.5);
+
+        CameraServer.startAutomaticCapture("front", Constants.frontCameraPort);
+        CameraServer.startAutomaticCapture("rear", Constants.rearCameraPort);
     }
 
     public double getXAngleOffset() {

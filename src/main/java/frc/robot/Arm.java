@@ -59,14 +59,20 @@ public class Arm {
         return this.arm.getEncoder().getVelocity();
     }
 
-    public void updatePIDValues(double P, double I, double D) {
-        this.pid.setP(P);
-        this.pid.setI(I);
-        this.pid.setD(D);
+    public void updatePIDValues(double[] pidValues) {
+        this.pid.setP(pidValues[0]);
+        this.pid.setI(pidValues[1]);
+        this.pid.setD(pidValues[2]);
     }
 
     public double[] getPIDValues() {
         double[] values = { this.pid.getP(), this.pid.getI(), this.pid.getD() };
         return values;
+    }
+
+    public void updateDashboard() {
+        SmartDashboard.putNumber("Arm Speed", this.speed);
+        SmartDashboard.putNumber("Arm Position", this.getEncoderPosition());
+        SmartDashboard.putNumber("Arm Velocity", this.getEncoderVelocity());
     }
 }

@@ -6,10 +6,12 @@ import com.revrobotics.CANSparkMaxLowLevel.MotorType;
 
 import edu.wpi.first.wpilibj.drive.DifferentialDrive;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
+import edu.wpi.first.math.geometry.Pose2d;
 
 public class TankDrive {
     private CANSparkMax[] motors;
     private DifferentialDrive drive;
+    private Pose2d pose;
 
     public TankDrive() {
         this.motors = new CANSparkMax[4];
@@ -39,6 +41,8 @@ public class TankDrive {
         SmartDashboard.putNumber("Drive Current Limit", Constants.driveCurrentLimit);
 
         this.drive = new DifferentialDrive(this.motors[0], this.motors[2]);
+
+        this.pose = new Pose2d();
     }
 
     public void updateSpeedTank(double leftSpeed, double rightSpeed) {
@@ -59,5 +63,13 @@ public class TankDrive {
         motors[3].setSmartCurrentLimit(limit);
 
         this.drive.arcadeDrive(speed, turn);
+    }
+
+    public Pose2d getPose() {
+        return pose;
+    }
+
+    public void resetPose() {
+        pose = new Pose2d();
     }
 }

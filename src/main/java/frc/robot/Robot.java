@@ -5,13 +5,13 @@
 package frc.robot;
 
 // import com.kauailabs.navx.frc.AHRS;
-import edu.wpi.first.cameraserver.CameraServer;
 import edu.wpi.first.wpilibj.AnalogGyro;
 import edu.wpi.first.wpilibj.DoubleSolenoid.Value;
 import edu.wpi.first.wpilibj.TimedRobot;
 import edu.wpi.first.wpilibj.XboxController;
 import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
+import edu.wpi.first.wpilibj.Timer;
 
 /**
  * The VM is configured to automatically run this class, and to call the functions corresponding to
@@ -29,6 +29,7 @@ public class Robot extends TimedRobot {
   public Vision vision;
   public Arm arm;
   public Pneumatics pneumatics;
+  public Autos autos;
 
   public double[] armPID;
 
@@ -57,12 +58,12 @@ public class Robot extends TimedRobot {
     vision = new Vision();
     arm = new Arm();
     pneumatics = new Pneumatics();
-
-    CameraServer.startAutomaticCapture("drive", 0);
-    CameraServer.startAutomaticCapture("manipulator", 1);
+    autos = new Autos();
 
     driveMode = true;
     armHold = false;
+
+    gyro.calibrate();
   }
 
   /**
@@ -93,12 +94,8 @@ public class Robot extends TimedRobot {
 
     SmartDashboard.putNumber("Arm Angle", arm.getEncoderPosition());
 
-    SmartDashboard.putNumber("Arm P", armPID[0]);
-    SmartDashboard.putNumber("Arm I", armPID[1]);
-    SmartDashboard.putNumber("Arm D", armPID[2]);
-
-    arm.updatePIDValues(SmartDashboard.getNumber("Arm P", armPID[0]), SmartDashboard.getNumber("Arm I", armPID[1]), SmartDashboard.getNumber("Arm D", armPID[2]));
-
+    pneumatics.updateDashboard();
+    arm.updateDashboard();
 
   }
 
@@ -118,21 +115,34 @@ public class Robot extends TimedRobot {
     // m_autoSelected = SmartDashboard.getString("Auto Selector", kDefaultAuto);
     System.out.println("Auto selected: " + m_autoSelected);
 
+    autos.autoInit();
+
     // m_odometry.resetPosition(gyro.getAngle(), m_leftEncoder.getPosition(), m_rightEncoder.getPosition());
   }
 
   /** This function is called periodically during autonomous. */
   @Override
   public void autonomousPeriodic() {
-    switch (m_autoSelected) {
-      case kCustomAuto:
-        // Put custom auto code here
-        break;
-      case kDefaultAuto:
-      default:
-        // Put default auto code here
-        break;
+    double timeFromAutoStart = 15.0 - Timer.getMatchTime();
+
+    autos.autoPeriodic();
+
+    if (timeFromAutoStart < 1.0) {
+      // Go backwards
+      tankDrive.updateSpeedTank(-Constants.autoDriveSpeed, -Constants.autoDriveSpeed);
+    } else if (timeFromAutoStart < 2.0) {
+      // Turn 180 Degrees
     }
+
+    // switch (m_autoSelected) {
+    //   case kCustomAuto:
+    //     // Put custom auto code here
+    //     break;
+    //   case kDefaultAuto:
+    //   default:
+    //     // Put default auto code here
+    //     break;
+    // }
   }
 
   /** This function is called once when teleop is enabled. */
@@ -168,10 +178,10 @@ public class Robot extends TimedRobot {
     // Prototype code for arm: A and B will extend both arm pistons
     if (m_operator.getRightBumper()) {
       pneumatics.setArm1(Value.kForward);
-      pneumatics.setArm2(Value.kForward);
+      pneumatics.setArm2(Value.kReverse);
     } else if (m_operator.getLeftBumper()) {
       pneumatics.setArm1(Value.kReverse);
-      pneumatics.setArm2(Value.kReverse);
+      pneumatics.setArm2(Value.kForward);
     }
 
     // Prototype code for manipulator: X will extend, Y will retract
