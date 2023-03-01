@@ -29,7 +29,7 @@ public class Robot extends TimedRobot {
   public Vision vision;
   public Arm arm;
   public Pneumatics pneumatics;
-  public Autos autos;
+  // public Autos autos;
 
   public double[] armPID;
 
@@ -58,7 +58,7 @@ public class Robot extends TimedRobot {
     vision = new Vision();
     arm = new Arm();
     pneumatics = new Pneumatics();
-    autos = new Autos();
+    // autos = new Autos();
 
     driveMode = true;
     armHold = false;
@@ -115,7 +115,7 @@ public class Robot extends TimedRobot {
     // m_autoSelected = SmartDashboard.getString("Auto Selector", kDefaultAuto);
     System.out.println("Auto selected: " + m_autoSelected);
 
-    autos.autoInit();
+    // autos.autoInit();
 
     // m_odometry.resetPosition(gyro.getAngle(), m_leftEncoder.getPosition(), m_rightEncoder.getPosition());
   }
@@ -125,7 +125,7 @@ public class Robot extends TimedRobot {
   public void autonomousPeriodic() {
     double timeFromAutoStart = 15.0 - Timer.getMatchTime();
 
-    autos.autoPeriodic();
+    // autos.autoPeriodic();
 
     if (timeFromAutoStart < 1.0) {
       // Go backwards
@@ -225,7 +225,17 @@ public class Robot extends TimedRobot {
 
   /** This function is called periodically during test mode. */
   @Override
-  public void testPeriodic() {}
+  public void testPeriodic() {
+    if (driveMode == true) {
+      double leftSpeed = joystickResponse(m_controller.getLeftY());
+      double rightSpeed = joystickResponse(m_controller.getRightY());
+      tankDrive.updateSpeedTank(leftSpeed, rightSpeed);
+    } else if (driveMode == false) {
+      double leftSpeed = joystickResponse(m_controller.getLeftY());
+      double rightSpeed = joystickResponse(m_controller.getRightX());
+      tankDrive.updateSpeedArcade(leftSpeed, rightSpeed);
+    }
+  }
 
   /** This function is called once when the robot is first started up. */
   @Override

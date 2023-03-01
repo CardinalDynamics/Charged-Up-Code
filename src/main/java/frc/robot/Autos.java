@@ -34,15 +34,15 @@ public class Autos {
 
         pathConstraints = new PathConstraints(Constants.maxVelocity, Constants.maxAcceleration);
 
-        autoBuilder = new RamseteAutoBuilder(
-                drive::getPose,
-                drive::resetPose,
-                kinematics,
-                new PIDConstants(0, 0, 0),
-                new PIDConstants(0, 0, 0),
-                ramseteController,
+        // autoBuilder = new RamseteAutoBuilder(
+        //         drive::getPose,
+        //         drive::resetPose,
+        //         kinematics,
+        //         new PIDConstants(0, 0, 0),
+        //         new PIDConstants(0, 0, 0),
+        //         ramseteController,
 
-            );
+        //     );
 
     }
 
