@@ -174,6 +174,8 @@ public class Robot extends TimedRobot {
     }
     if (m_timer.get() == 2.5) {
       manip1.toggle();
+      arm1.toggle();
+      arm2.toggle();
     }
     if (m_timer.get() > 2) {
       if (m_timer.get() < 2.5) {
