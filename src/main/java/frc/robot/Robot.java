@@ -12,6 +12,7 @@ import edu.wpi.first.wpilibj.XboxController;
 import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj.Timer;
+import edu.wpi.first.math.filter.SlewRateLimiter;
 
 /**
  * The VM is configured to automatically run this class, and to call the functions corresponding to
@@ -43,6 +44,9 @@ public class Robot extends TimedRobot {
 
   private boolean driveMode;
   private boolean armHold;
+
+  private SlewRateLimiter limit1 = new SlewRateLimiter(0.2);
+  // private SlewRateLimiter limit2 = new SlewRateLimiter(0.2);
 
   /**
    * This function is run when the robot is first started up and should be used for any
@@ -147,7 +151,11 @@ public class Robot extends TimedRobot {
 
   /** This function is called once when teleop is enabled. */
   @Override
-  public void teleopInit() {}
+  public void teleopInit() {
+    pneumatics.setArm1(Value.kReverse);
+    pneumatics.setArm2(Value.kReverse);
+    pneumatics.setManipulator(Value.kReverse);
+  }
 
   /** This function is called periodically during operator control. */
   @Override
@@ -157,22 +165,24 @@ public class Robot extends TimedRobot {
     SmartDashboard.putBoolean("In Placement Range", (dist > 0 && dist < 20));
     
     if (driveMode == true) {
-      double leftSpeed = joystickResponse(m_controller.getLeftY());
-      double rightSpeed = joystickResponse(m_controller.getRightY());
+      double leftSpeed = limit1.calculate(joystickResponse(m_controller.getLeftY()));
+      double rightSpeed = limit1.calculate(joystickResponse(m_controller.getRightY()));
       tankDrive.updateSpeedTank(leftSpeed, rightSpeed);
     } else if (driveMode == false) {
-      double leftSpeed = joystickResponse(m_controller.getLeftY());
+      double leftSpeed = limit1.calculate(joystickResponse(m_controller.getLeftY()));
       double rightSpeed = joystickResponse(m_controller.getRightX());
       tankDrive.updateSpeedArcade(leftSpeed, rightSpeed);
     }
 
-    if (armHold == true) {
-      arm.updateArmPID(Constants.setpoint);
-    } else if (armHold == false) {
-      arm.updateArm(m_operator.getLeftTriggerAxis());
-    } else if (m_operator.getLeftTriggerAxis() < .1) {
-      arm.resetArm();
-    }
+    // if (armHold == true) {
+    //   arm.updateArmPID(Constants.setpoint);
+    // } else if (armHold == false) {
+    //   arm.updateArm(m_operator.getLeftTriggerAxis());
+    // } else if (m_operator.getLeftTriggerAxis() < .1) {
+    //   arm.updateArm(0);
+    // }
+
+    arm.updateArm(m_operator.getLeftTriggerAxis());
     
     
     // Prototype code for arm: A and B will extend both arm pistons
