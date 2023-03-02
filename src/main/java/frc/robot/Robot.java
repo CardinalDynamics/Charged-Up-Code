@@ -189,7 +189,7 @@ public class Robot extends TimedRobot {
     }
     if (m_timer.get() < 5) {
       if (m_timer.get() > 3) {
-        m_drive.tankDrive(0, 0)
+        m_drive.tankDrive(0, 0);
       }
     }
   }
