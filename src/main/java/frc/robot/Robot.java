@@ -210,13 +210,15 @@ public class Robot extends TimedRobot {
       m_drive.tankDrive(-rateLimit1.calculate(m_controller.getLeftY()), -rateLimit2.calculate(m_controller.getRightY()));
     }
 
-    if (m_operator.getLeftTriggerAxis() > 0.05) {
-      m_arm.setVoltage(-2);
-    } else if (m_operator.getRightTriggerAxis() > 0.05) {
-      m_arm.setVoltage(4);
-    } else {
-      m_arm.setVoltage(0.55);
-    }
+    // if (m_operator.getLeftTriggerAxis() > 0.05) {
+    //   m_arm.setVoltage(-2);
+    // } else if (m_operator.getRightTriggerAxis() > 0.05) {
+    //   m_arm.setVoltage(4);
+    // } else {
+    //   m_arm.setVoltage(0.55);
+    // }
+
+    m_arm.set(m_operator.getRightTriggerAxis());
     
     if (m_operator.getAButton()) {
       arm1.toggle();
