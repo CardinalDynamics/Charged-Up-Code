@@ -20,10 +20,10 @@ public class Constants {
 
     // Arm
     public static final int armMotorPort = 5;
-    public static final int armSolenoidPortA = 11;
-    public static final int armSolenoidPortB = 10;
-    public static final int armSolenoidPortC = 13;
-    public static final int armSolenoidPortD = 12;
+    public static final int armSolenoidPortA = 13;
+    public static final int armSolenoidPortB = 12;
+    public static final int armSolenoidPortC = 11;
+    public static final int armSolenoidPortD = 10;
     public static final double armP = 1.0;
     public static final double armI = 0.0;
     public static final double armD = 0.0;

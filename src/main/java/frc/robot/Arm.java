@@ -39,6 +39,13 @@ public class Arm {
         this.arm.set(this.speed);
     }
 
+    public void updateArmVoltage(double voltage) {
+        int limit = (int) Math.round(SmartDashboard.getNumber("Arm Current Limit", Constants.armCurrentLimit));
+        arm.setSmartCurrentLimit(limit);
+
+        this.arm.setVoltage(voltage);
+    }
+
     public void updateArmPID(double target) {
         this.pid.setReference(target, ControlType.kPosition);
     }

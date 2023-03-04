@@ -4,30 +4,27 @@
 
 package frc.robot;
 
-import edu.wpi.first.wpilibj.TimedRobot;
-import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
-import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
-
 // import java.util.Timer;
 
 import com.revrobotics.CANSparkMax;
-import com.revrobotics.CANSparkMaxLowLevel.MotorType;
 import com.revrobotics.CANSparkMax.IdleMode;
-import edu.wpi.first.wpilibj.drive.DifferentialDrive;
-import edu.wpi.first.wpilibj.XboxController;
-import edu.wpi.first.wpilibj.DoubleSolenoid.Value;
+import com.revrobotics.CANSparkMaxLowLevel.MotorType;
+
 import edu.wpi.first.cameraserver.CameraServer;
-import edu.wpi.first.wpilibj.Timer;
-
+import edu.wpi.first.math.filter.SlewRateLimiter;
 import edu.wpi.first.networktables.NetworkTable;
-import edu.wpi.first.networktables.NetworkTableInstance;
 import edu.wpi.first.networktables.NetworkTableEntry;
-
+import edu.wpi.first.networktables.NetworkTableInstance;
 import edu.wpi.first.wpilibj.Compressor;
 import edu.wpi.first.wpilibj.DoubleSolenoid;
 import edu.wpi.first.wpilibj.PneumaticsModuleType;
-
-import edu.wpi.first.math.filter.SlewRateLimiter;
+import edu.wpi.first.wpilibj.TimedRobot;
+import edu.wpi.first.wpilibj.Timer;
+import edu.wpi.first.wpilibj.XboxController;
+import edu.wpi.first.wpilibj.DoubleSolenoid.Value;
+import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
+import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
+import edu.wpi.first.wpilibj.DriverStation;
 /**
  * The VM is configured to automatically run this class, and to call the functions corresponding to
  * each mode, as described in the TimedRobot documentation. If you change the name of this class or
@@ -40,15 +37,15 @@ public class Robot extends TimedRobot {
   private String m_autoSelected;
   private final SendableChooser<String> m_chooser = new SendableChooser<>();
 
-  private final CANSparkMax m_left1 = new CANSparkMax(1, MotorType.kBrushless);
-  private final CANSparkMax m_left2 = new CANSparkMax(2, MotorType.kBrushless);
-  private final CANSparkMax m_right1 = new CANSparkMax(3, MotorType.kBrushless);
-  private final CANSparkMax m_right2 = new CANSparkMax(4, MotorType.kBrushless);
+  // private final CANSparkMax m_left1 = new CANSparkMax(1, MotorType.kBrushless);
+  // private final CANSparkMax m_left2 = new CANSparkMax(2, MotorType.kBrushless);
+  // private final CANSparkMax m_right1 = new CANSparkMax(3, MotorType.kBrushless);
+  // private final CANSparkMax m_right2 = new CANSparkMax(4, MotorType.kBrushless);
   private final Timer m_timer = new Timer();
 
-  private final CANSparkMax m_arm = new CANSparkMax(5, MotorType.kBrushless);
+  // private final CANSparkMax m_arm = new CANSparkMax(5, MotorType.kBrushless);
 
-  private final DifferentialDrive m_drive = new DifferentialDrive(m_left1, m_right1);
+  // private final DifferentialDrive m_drive = new DifferentialDrive(m_left1, m_right1);
 
   private final NetworkTable table = NetworkTableInstance.getDefault().getTable("limelight");
   private final NetworkTableEntry tx = table.getEntry("tx");
@@ -58,16 +55,23 @@ public class Robot extends TimedRobot {
   private final XboxController m_controller = new XboxController(0);
   private final XboxController m_operator = new XboxController(1);
 
-  private final Compressor compressor = new Compressor(PneumaticsModuleType.REVPH);
-  private final DoubleSolenoid arm1 = new DoubleSolenoid(PneumaticsModuleType.REVPH, 0, 1);
-  private final DoubleSolenoid arm2 = new DoubleSolenoid(PneumaticsModuleType.REVPH, 4, 5);
-  private final DoubleSolenoid manip1 = new DoubleSolenoid(PneumaticsModuleType.REVPH, 6, 7);
+  // private final Compressor compressor = new Compressor(PneumaticsModuleType.REVPH);
+  // private final DoubleSolenoid arm1 = new DoubleSolenoid(PneumaticsModuleType.REVPH, 0, 1);
+  // private final DoubleSolenoid arm2 = new DoubleSolenoid(PneumaticsModuleType.REVPH, 4, 5);
+  // private final DoubleSolenoid manip1 = new DoubleSolenoid(PneumaticsModuleType.REVPH, 6, 7);
 
   private boolean driveMode;
-  private boolean armState;
+  private boolean inverted;
 
-  private SlewRateLimiter rateLimit1 = new SlewRateLimiter(1);
-  private SlewRateLimiter rateLimit2 = new SlewRateLimiter(1);
+  private TankDrive drive;
+  private Pneumatics pneumatics;
+  private Arm arm;
+
+  private SlewRateLimiter rateLimit1 = new SlewRateLimiter(1.5);
+  private SlewRateLimiter rateLimit2 = new SlewRateLimiter(1.5);
+
+  private final SendableChooser<String> autoOn = new SendableChooser<>();
+  private String auto;
 
   /**
    * This function is run when the robot is first started up and should be used for any
@@ -75,43 +79,29 @@ public class Robot extends TimedRobot {
    */
   @Override
   public void robotInit() {
-    m_chooser.setDefaultOption("Default Auto", kDefaultAuto);
-    m_chooser.addOption("My Auto", kCustomAuto);
-    SmartDashboard.putData("Auto choices", m_chooser);
+    // m_chooser.setDefaultOption("Default Auto", kDefaultAuto);
+    // m_chooser.addOption("My Auto", kCustomAuto);
+    // SmartDashboard.putData("Auto choices", m_chooser);
 
-    m_left1.restoreFactoryDefaults();
-    m_left2.restoreFactoryDefaults();
-    m_right1.restoreFactoryDefaults();
-    m_right2.restoreFactoryDefaults();
-    m_arm.restoreFactoryDefaults();
+    autoOn.setDefaultOption("Auto On", "Auto On");
+    autoOn.addOption("Auto Off", "Auto Off");
+    SmartDashboard.putData("Auto On", autoOn);
 
-    m_left1.setIdleMode(IdleMode.kCoast);
-    m_left2.setIdleMode(IdleMode.kCoast);
-    m_right1.setIdleMode(IdleMode.kCoast);
-    m_right2.setIdleMode(IdleMode.kCoast);
-    m_arm.setIdleMode(IdleMode.kBrake);
+    drive = new TankDrive();
+    pneumatics = new Pneumatics();
+    arm = new Arm();
 
-    m_left1.setSmartCurrentLimit(80);
-    m_left2.setSmartCurrentLimit(80);
-    m_right1.setSmartCurrentLimit(80);
-    m_right2.setSmartCurrentLimit(80);
-    m_arm.setSmartCurrentLimit(80);
+    // CameraServer.startAutomaticCapture("drive", 0);
+    // CameraServer.startAutomaticCapture("manipulator", 1);
 
-    m_left2.follow(m_left1);
-    m_right2.follow(m_right1);
-
-    m_right1.setInverted(true);
-    m_right2.setInverted(true);
-    m_arm.setInverted(true);
-    arm1.set(Value.kReverse);
-    manip1.set(Value.kForward);
-
-    CameraServer.startAutomaticCapture("drive", 0);
-    CameraServer.startAutomaticCapture("manipulator", 1);
-
-    compressor.enableDigital();
+    // compressor.enableDigital();
 
     driveMode = true;
+    inverted = false;
+
+    pneumatics.setArm1(Value.kReverse);
+    pneumatics.setArm2(Value.kReverse);
+    pneumatics.setManipulator(Value.kForward);
 
   }
 
@@ -131,12 +121,18 @@ public class Robot extends TimedRobot {
     SmartDashboard.putNumber("LimelightX", x);
     SmartDashboard.putNumber("LimelightY", y);
     SmartDashboard.putNumber("LimelightArea", area);
+    
+    // SmartDashboard.putBooleanArray("Solenoid States", pneumatics.solenoidStates());
 
     if (m_controller.getAButtonPressed()) {
       driveMode =! driveMode;
     }
+    if (m_controller.getXButtonPressed()) {
+      inverted =! inverted;
+    }
 
     SmartDashboard.putBoolean("Drive Mode", driveMode);
+    SmartDashboard.putBoolean("Inverted", inverted);
   }
 
   /**
@@ -151,53 +147,49 @@ public class Robot extends TimedRobot {
    */
   @Override
   public void autonomousInit() {
-    m_autoSelected = m_chooser.getSelected();
+    // m_autoSelected = m_chooser.getSelected();
     // m_autoSelected = SmartDashboard.getString("Auto Selector", kDefaultAuto);
-    System.out.println("Auto selected: " + m_autoSelected);
+    // System.out.println("Auto selected: " + m_autoSelected);
+    m_timer.reset();
     m_timer.start();
+    pneumatics.setManipulator(Value.kReverse);
+
+    // auto = autoOn.getSelected();
+
   }
 
   /** This function is called periodically during autonomous. */
   @Override
   public void autonomousPeriodic() {
-    if (m_timer.get() < 1) {
-      m_drive.tankDrive(0, 0);
+    // if (m_timer.get() < 1) {
+    //   pneumatics.setManipulator(Value.kForward);
+    // }
+    // if (m_timer.get() < 1.25 && m_timer.get() > 1) {
+    //   drive.updateSpeedArcade(.1, 0);
+    // }
+    // if (m_timer.get() < 2 && m_timer.get() > 1.25) {
+    //   drive.updateSpeedArcade(-.25, 0);
+    // }
+
+    switch (auto) {
+      case "Auto On": {
+    if (m_timer.get() < 1 && m_timer.get() > 0) {
+      drive.updateSpeedArcade(-.3, 0);
+    } else if (m_timer.get() < 2 && m_timer.get() > 1) {
+      drive.updateSpeedArcade(.6, 0);
+    } else if (m_timer.get() < 5.5  && m_timer.get() > 2) {
+      drive.updateSpeedArcade(-.5, 0); }
     }
-    if (m_timer.get() < 2) {
-      if (m_timer.get() > 1) {
-        m_arm.setVoltage(6);
-      }
-    }
-    if (m_timer.get() == 2.1) {
-      arm1.toggle();
-      arm2.toggle();
-    }
-    if (m_timer.get() == 2.5) {
-      manip1.toggle();
-      arm1.toggle();
-      arm2.toggle();
-    }
-    if (m_timer.get() > 2) {
-      if (m_timer.get() < 2.5) {
-        m_arm.setVoltage(0.55);
-      }
-    }
-    if (m_timer.get() < 3) {
-      if (m_timer.get() > 2.5) {
-        m_drive.tankDrive(0, 0);
-      }
-    }
-    if (m_timer.get() < 5) {
-      if (m_timer.get() > 3) {
-        m_drive.tankDrive(0, 0);
-      }
+    case "Auto Off": {
+      break;
     }
   }
+}
 
   /** This function is called once when teleop is enabled. */
   @Override
   public void teleopInit() {
-
+    m_timer.stop();
   }
 
   /** This function is called periodically during operator control. */
@@ -205,9 +197,23 @@ public class Robot extends TimedRobot {
   public void teleopPeriodic() {
     
     if (driveMode == true) {
-      m_drive.arcadeDrive(-rateLimit1.calculate(m_controller.getLeftY()), m_controller.getLeftX());
+      double speed = rateLimit1.calculate(m_controller.getLeftY());
+      double turn = m_controller.getRightX();
+      if (inverted == true) {
+        speed = -speed;
+        turn = -turn;
+        drive.updateSpeedArcade(speed, turn);
+      }
+      drive.updateSpeedArcade(speed, turn);
     } else if (driveMode == false) {
-      m_drive.tankDrive(-rateLimit1.calculate(m_controller.getLeftY()), -rateLimit2.calculate(m_controller.getRightY()));
+      double leftSpeed = rateLimit1.calculate(m_controller.getLeftY());
+      double rightSpeed = rateLimit2.calculate(m_controller.getRightY());
+      if (inverted == true) {
+        leftSpeed = -rightSpeed;
+        rightSpeed = -leftSpeed;
+        drive.updateSpeedTank(leftSpeed, rightSpeed);
+      }
+      drive.updateSpeedTank(leftSpeed, rightSpeed);
     }
 
     // if (m_operator.getLeftTriggerAxis() > 0.05) {
@@ -218,16 +224,23 @@ public class Robot extends TimedRobot {
     //   m_arm.setVoltage(0.55);
     // }
 
-    m_arm.set(m_operator.getRightTriggerAxis());
+    arm.updateArm(m_operator.getRightTriggerAxis());
+    if (m_operator.getRightTriggerAxis() == 0) {
+      arm.updateArm(-m_operator.getLeftTriggerAxis());
+    }
     
-    if (m_operator.getAButton()) {
-      arm1.toggle();
+    if (m_operator.getAButtonPressed()) {
+      pneumatics.toggleArm1();
     }
-    if (m_operator.getBButton()) {
-      arm2.toggle();
+    if (m_operator.getBButtonPressed()) {
+      pneumatics.toggleArm2();
     }
-    if (m_operator.getXButton()) {
-      manip1.toggle();
+    if (m_operator.getXButtonPressed()) {
+      pneumatics.toggleManipulator();
+    }
+    if (m_operator.getYButtonPressed()) {
+      pneumatics.toggleArm1();
+      pneumatics.toggleArm2();
     }
   }
 

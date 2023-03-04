@@ -16,8 +16,8 @@ public class Vision {
         pidController.setSetpoint(0);
         pidController.setTolerance(0.5);
 
-        CameraServer.startAutomaticCapture("front", Constants.frontCameraPort);
-        CameraServer.startAutomaticCapture("rear", Constants.rearCameraPort);
+        CameraServer.startAutomaticCapture("arm", Constants.frontCameraPort);
+        // CameraServer.startAutomaticCapture("rear", Constants.rearCameraPort);
     }
 
     public double getXAngleOffset() {
