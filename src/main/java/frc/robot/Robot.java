@@ -190,9 +190,9 @@ public class Robot extends TimedRobot {
         } else if (m_timer.get() > 2) {
           if (Math.abs(navx.getPitch()) < 25 && Math.abs(navx.getRoll()) < 25) {
             drive.updateSpeedArcade(0, 0);
-          } else if (navx.getPitch() < -25) {
+          } else if (navx.getPitch() < -10) {
             drive.updateSpeedArcade(-.2, 0);
-          } else if (navx.getPitch() < 25) {
+          } else if (navx.getPitch() < 10) {
             drive.updateSpeedArcade(.2, 0);
           }
         }
