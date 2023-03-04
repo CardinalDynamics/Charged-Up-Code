@@ -4,19 +4,16 @@
 
 package frc.robot;
 
+// import edu.wpi.first.wpilibj.AnalogGyro;
+import com.kauailabs.navx.frc.AHRS;
+
 import edu.wpi.first.math.filter.SlewRateLimiter;
-import edu.wpi.first.networktables.NetworkTable;
-import edu.wpi.first.networktables.NetworkTableEntry;
-import edu.wpi.first.networktables.NetworkTableInstance;
 import edu.wpi.first.wpilibj.DoubleSolenoid.Value;
-import edu.wpi.first.wpilibj.I2C.Port;
 import edu.wpi.first.wpilibj.TimedRobot;
 import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj.XboxController;
 import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
-import edu.wpi.first.wpilibj.AnalogGyro;
-import com.kauailabs.navx.frc.AHRS;
 
 /**
  * The VM is configured to automatically run this class, and to call the functions corresponding to
@@ -36,16 +33,16 @@ public class Robot extends TimedRobot {
 
   // private final DifferentialDrive m_drive = new DifferentialDrive(m_left1, m_right1);
 
-  private final NetworkTable table = NetworkTableInstance.getDefault().getTable("limelight");
-  private final NetworkTableEntry tx = table.getEntry("tx");
-  private final NetworkTableEntry ty = table.getEntry("ty");
-  private final NetworkTableEntry ta = table.getEntry("ta");
+  // private final NetworkTable table = NetworkTableInstance.getDefault().getTable("limelight");
+  // private final NetworkTableEntry tx = table.getEntry("tx");
+  // private final NetworkTableEntry ty = table.getEntry("ty");
+  // private final NetworkTableEntry ta = table.getEntry("ta");
 
   private final XboxController m_controller = new XboxController(0);
   private final XboxController m_operator = new XboxController(1);
 
-  private final AnalogGyro gyro = new AnalogGyro(0);
-  private final AHRS navx = new AHRS(Port.kMXP);
+  // private final AnalogGyro gyro = new AnalogGyro(0);
+  private AHRS navx;
 
   // private final Compressor compressor = new Compressor(PneumaticsModuleType.REVPH);
   // private final DoubleSolenoid arm1 = new DoubleSolenoid(PneumaticsModuleType.REVPH, 0, 1);
@@ -59,8 +56,8 @@ public class Robot extends TimedRobot {
   private Pneumatics pneumatics;
   private Arm arm;
 
-  private SlewRateLimiter rateLimit1 = new SlewRateLimiter(1.5);
-  private SlewRateLimiter rateLimit2 = new SlewRateLimiter(1.5);
+  private SlewRateLimiter rateLimit1 = new SlewRateLimiter(.65);
+  private SlewRateLimiter rateLimit2 = new SlewRateLimiter(.65);
 
   private final SendableChooser<String> autoOn = new SendableChooser<>();
   private String auto;
@@ -80,6 +77,8 @@ public class Robot extends TimedRobot {
     autoOn.addOption("Auto Off", "Auto Off");
     SmartDashboard.putData("Auto On", autoOn);
 
+    navx = new AHRS();
+
     drive = new TankDrive();
     pneumatics = new Pneumatics();
     arm = new Arm();
@@ -96,8 +95,8 @@ public class Robot extends TimedRobot {
     pneumatics.setArm2(Value.kReverse);
     pneumatics.setManipulator(Value.kForward);
 
-    gyro.reset();
-    gyro.calibrate();
+    // gyro.reset();
+    // gyro.calibrate();
 
     navx.reset();
     navx.calibrate();
@@ -113,13 +112,13 @@ public class Robot extends TimedRobot {
    */
   @Override
   public void robotPeriodic() {
-    double x = tx.getDouble(0.0);
-    double y = ty.getDouble(0.0);
-    double area = ta.getDouble(0.0);
+    // double x = tx.getDouble(0.0);
+    // double y = ty.getDouble(0.0);
+    // double area = ta.getDouble(0.0);
 
-    SmartDashboard.putNumber("LimelightX", x);
-    SmartDashboard.putNumber("LimelightY", y);
-    SmartDashboard.putNumber("LimelightArea", area);
+    // SmartDashboard.putNumber("LimelightX", x);
+    // SmartDashboard.putNumber("LimelightY", y);
+    // SmartDashboard.putNumber("LimelightArea", area);
     
     // SmartDashboard.putBooleanArray("Solenoid States", pneumatics.solenoidStates());
 
@@ -153,7 +152,7 @@ public class Robot extends TimedRobot {
     m_timer.start();
     pneumatics.setManipulator(Value.kReverse);
 
-    gyro.reset();
+    // gyro.reset();
     navx.reset();
     
     drive.setBrakeMode(true);
@@ -175,33 +174,34 @@ public class Robot extends TimedRobot {
     //   drive.updateSpeedArcade(-.25, 0);
     // }
 
-    switch (auto) {
-      case "Auto On": {
+    // switch (auto) {
+    //   case "Auto On": {
         if (m_timer.get() < 1 && m_timer.get() > 0) {
           drive.updateSpeedArcade(-.3, 0);
         } else if (m_timer.get() < 2 && m_timer.get() > 1) {
           drive.updateSpeedArcade(.6, 0);
         } else if (m_timer.get() < 5.5  && m_timer.get() > 2) {
           drive.updateSpeedArcade(-.5, 0); }
-      }
-      case "Middle Auto": {
-        if (m_timer.get() < 2 && m_timer.get() > 0) {
-          drive.updateSpeedArcade(.5, 0);
-        } else if (m_timer.get() > 2) {
-          if (Math.abs(navx.getPitch()) < 25 && Math.abs(navx.getRoll()) < 25) {
-            drive.updateSpeedArcade(0, 0);
-          } else if (navx.getPitch() < -10) {
-            drive.updateSpeedArcade(-.2, 0);
-          } else if (navx.getPitch() < 10) {
-            drive.updateSpeedArcade(.2, 0);
-          }
-        }
-      }
-      case "Auto Off": {
-        drive.updateSpeedArcade(0, 0);
-      }
+      // }
+      // case "Middle Auto": {
+      //   if (m_timer.get() < 2 && m_timer.get() > 0) {
+      //     drive.updateSpeedArcade(.5, 0);
+      //   }
+        // } else if (m_timer.get() > 2 && m_timer.get() < 15) {
+        //   if (Math.abs(navx.getPitch()) < 10 && Math.abs(navx.getRoll()) < 10) {
+        //     drive.updateSpeedArcade(0, 0);
+        //   } else if (navx.getPitch() < -10) {
+        //     drive.updateSpeedArcade(-.2, 0);
+        //   } else if (navx.getPitch() > 10) {
+        //     drive.updateSpeedArcade(.2, 0);
+        //   }
+        // }
+      // }
+      // case "Auto Off": {
+      //   drive.updateSpeedArcade(0, 0);
+      // }
   }
-}
+// }
 
   /** This function is called once when teleop is enabled. */
   @Override
@@ -250,15 +250,15 @@ public class Robot extends TimedRobot {
     if (m_operator.getAButtonPressed()) {
       pneumatics.toggleArm1();
     }
-    if (m_operator.getBButtonPressed()) {
-      pneumatics.toggleArm2();
-    }
+    // if (m_operator.getBButtonPressed()) {
+    //   pneumatics.toggleArm2();
+    // }
     if (m_operator.getXButtonPressed()) {
       pneumatics.toggleManipulator();
     }
     if (m_operator.getYButtonPressed()) {
       pneumatics.toggleArm1();
-      pneumatics.toggleArm2();
+      // pneumatics.toggleArm2();
     }
   }
 

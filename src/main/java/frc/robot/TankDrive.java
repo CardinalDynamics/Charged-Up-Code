@@ -43,6 +43,8 @@ public class TankDrive {
         this.drive = new DifferentialDrive(this.motors[0], this.motors[2]);
 
         this.pose = new Pose2d();
+
+        this.drive.setDeadband(0.1);
     }
 
     public void updateSpeedTank(double leftSpeed, double rightSpeed) {
@@ -56,11 +58,11 @@ public class TankDrive {
     }
 
     public void updateSpeedArcade(double speed, double turn) {
-        int limit = (int) Math.round(SmartDashboard.getNumber("Drive Current Limit", Constants.driveCurrentLimit));
-        motors[0].setSmartCurrentLimit(limit);
-        motors[1].setSmartCurrentLimit(limit);
-        motors[2].setSmartCurrentLimit(limit);
-        motors[3].setSmartCurrentLimit(limit);
+        // int limit = (int) Math.round(SmartDashboard.getNumber("Drive Current Limit", Constants.driveCurrentLimit));
+        // motors[0].setSmartCurrentLimit(limit);
+        // motors[1].setSmartCurrentLimit(limit);
+        // motors[2].setSmartCurrentLimit(limit);
+        // motors[3].setSmartCurrentLimit(limit);
 
         this.drive.arcadeDrive(speed, turn);
     }
