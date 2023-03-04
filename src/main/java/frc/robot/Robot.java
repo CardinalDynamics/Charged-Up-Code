@@ -56,8 +56,8 @@ public class Robot extends TimedRobot {
   private Pneumatics pneumatics;
   private Arm arm;
 
-  private SlewRateLimiter rateLimit1 = new SlewRateLimiter(.65);
-  private SlewRateLimiter rateLimit2 = new SlewRateLimiter(.65);
+  private SlewRateLimiter rateLimit1 = new SlewRateLimiter(.8);
+  private SlewRateLimiter rateLimit2 = new SlewRateLimiter(.8);
 
   private final SendableChooser<String> autoOn = new SendableChooser<>();
   private String auto;
