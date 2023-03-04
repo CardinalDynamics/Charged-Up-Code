@@ -2,20 +2,20 @@ package frc.robot;
 
 import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
-import edu.wpi.first.math.controller.RamseteController;
-import edu.wpi.first.math.kinematics.DifferentialDriveKinematics;
+// import edu.wpi.first.math.controller.RamseteController;
+// import edu.wpi.first.math.kinematics.DifferentialDriveKinematics;
 
 import com.pathplanner.lib.PathConstraints;
 import com.pathplanner.lib.PathPlanner;
 import com.pathplanner.lib.PathPlannerTrajectory;
-import com.pathplanner.lib.auto.PIDConstants;
+// import com.pathplanner.lib.auto.PIDConstants;
 import com.pathplanner.lib.auto.RamseteAutoBuilder;
 
 public class Autos {
     private final SendableChooser<String> autoChooser = new SendableChooser<>();
     private String autoSelected;
-    private final RamseteController ramseteController = new RamseteController();
-    private final DifferentialDriveKinematics kinematics = new DifferentialDriveKinematics(Constants.trackWidth);
+    // private final RamseteController ramseteController = new RamseteController();
+    // private final DifferentialDriveKinematics kinematics = new DifferentialDriveKinematics(Constants.trackWidth);
     PathPlannerTrajectory pathPlannerTrajectory;
     PathConstraints pathConstraints;
     RamseteAutoBuilder autoBuilder;

@@ -4,27 +4,17 @@
 
 package frc.robot;
 
-// import java.util.Timer;
-
-import com.revrobotics.CANSparkMax;
-import com.revrobotics.CANSparkMax.IdleMode;
-import com.revrobotics.CANSparkMaxLowLevel.MotorType;
-
-import edu.wpi.first.cameraserver.CameraServer;
 import edu.wpi.first.math.filter.SlewRateLimiter;
 import edu.wpi.first.networktables.NetworkTable;
 import edu.wpi.first.networktables.NetworkTableEntry;
 import edu.wpi.first.networktables.NetworkTableInstance;
-import edu.wpi.first.wpilibj.Compressor;
-import edu.wpi.first.wpilibj.DoubleSolenoid;
-import edu.wpi.first.wpilibj.PneumaticsModuleType;
+import edu.wpi.first.wpilibj.DoubleSolenoid.Value;
 import edu.wpi.first.wpilibj.TimedRobot;
 import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj.XboxController;
-import edu.wpi.first.wpilibj.DoubleSolenoid.Value;
 import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
-import edu.wpi.first.wpilibj.DriverStation;
+
 /**
  * The VM is configured to automatically run this class, and to call the functions corresponding to
  * each mode, as described in the TimedRobot documentation. If you change the name of this class or
@@ -32,10 +22,6 @@ import edu.wpi.first.wpilibj.DriverStation;
  * project.
  */
 public class Robot extends TimedRobot {
-  private static final String kDefaultAuto = "Default";
-  private static final String kCustomAuto = "My Auto";
-  private String m_autoSelected;
-  private final SendableChooser<String> m_chooser = new SendableChooser<>();
 
   // private final CANSparkMax m_left1 = new CANSparkMax(1, MotorType.kBrushless);
   // private final CANSparkMax m_left2 = new CANSparkMax(2, MotorType.kBrushless);
@@ -147,8 +133,8 @@ public class Robot extends TimedRobot {
    */
   @Override
   public void autonomousInit() {
-    // m_autoSelected = m_chooser.getSelected();
-    // m_autoSelected = SmartDashboard.getString("Auto Selector", kDefaultAuto);
+    auto = autoOn.getSelected();
+    auto = SmartDashboard.getString("Auto On", auto);
     // System.out.println("Auto selected: " + m_autoSelected);
     m_timer.reset();
     m_timer.start();
@@ -173,16 +159,16 @@ public class Robot extends TimedRobot {
 
     switch (auto) {
       case "Auto On": {
-    if (m_timer.get() < 1 && m_timer.get() > 0) {
-      drive.updateSpeedArcade(-.3, 0);
-    } else if (m_timer.get() < 2 && m_timer.get() > 1) {
-      drive.updateSpeedArcade(.6, 0);
-    } else if (m_timer.get() < 5.5  && m_timer.get() > 2) {
-      drive.updateSpeedArcade(-.5, 0); }
-    }
-    case "Auto Off": {
-      break;
-    }
+        if (m_timer.get() < 1 && m_timer.get() > 0) {
+          drive.updateSpeedArcade(-.3, 0);
+        } else if (m_timer.get() < 2 && m_timer.get() > 1) {
+          drive.updateSpeedArcade(.6, 0);
+        } else if (m_timer.get() < 5.5  && m_timer.get() > 2) {
+          drive.updateSpeedArcade(-.5, 0); }
+      }
+      case "Auto Off": {
+        drive.updateSpeedArcade(0, 0);
+      }
   }
 }
 

@@ -12,8 +12,8 @@ public class Pneumatics {
     private DoubleSolenoid manipulator;
     private PneumaticHub pneumaticHub;
     private Compressor compressor;
-    private Value[] solenoidStates;
-    private boolean[] solenoidReturn;
+    // private Value[] solenoidStates;
+    // private boolean[] solenoidReturn;
 
     public Pneumatics() {
         this.arm1 = new DoubleSolenoid(Constants.moduleType, Constants.armSolenoidPortA, Constants.armSolenoidPortB);
