@@ -72,4 +72,19 @@ public class TankDrive {
     public void resetPose() {
         pose = new Pose2d();
     }
+
+    public void setBrakeMode(boolean brake) {
+        if (brake) {
+            this.motors[0].setIdleMode(IdleMode.kBrake);
+            this.motors[1].setIdleMode(IdleMode.kBrake);
+            this.motors[2].setIdleMode(IdleMode.kBrake);
+            this.motors[3].setIdleMode(IdleMode.kBrake);
+        } else {
+            this.motors[0].setIdleMode(IdleMode.kCoast);
+            this.motors[1].setIdleMode(IdleMode.kCoast);
+            this.motors[2].setIdleMode(IdleMode.kCoast);
+            this.motors[3].setIdleMode(IdleMode.kCoast);
+        }
+    }
+
 }

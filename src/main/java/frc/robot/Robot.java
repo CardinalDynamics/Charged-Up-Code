@@ -9,11 +9,14 @@ import edu.wpi.first.networktables.NetworkTable;
 import edu.wpi.first.networktables.NetworkTableEntry;
 import edu.wpi.first.networktables.NetworkTableInstance;
 import edu.wpi.first.wpilibj.DoubleSolenoid.Value;
+import edu.wpi.first.wpilibj.I2C.Port;
 import edu.wpi.first.wpilibj.TimedRobot;
 import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj.XboxController;
 import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
+import edu.wpi.first.wpilibj.AnalogGyro;
+import com.kauailabs.navx.frc.AHRS;
 
 /**
  * The VM is configured to automatically run this class, and to call the functions corresponding to
@@ -40,6 +43,9 @@ public class Robot extends TimedRobot {
 
   private final XboxController m_controller = new XboxController(0);
   private final XboxController m_operator = new XboxController(1);
+
+  private final AnalogGyro gyro = new AnalogGyro(0);
+  private final AHRS navx = new AHRS(Port.kMXP);
 
   // private final Compressor compressor = new Compressor(PneumaticsModuleType.REVPH);
   // private final DoubleSolenoid arm1 = new DoubleSolenoid(PneumaticsModuleType.REVPH, 0, 1);
@@ -70,6 +76,7 @@ public class Robot extends TimedRobot {
     // SmartDashboard.putData("Auto choices", m_chooser);
 
     autoOn.setDefaultOption("Auto On", "Auto On");
+    autoOn.addOption("Middle Auto", "Middle Auto");
     autoOn.addOption("Auto Off", "Auto Off");
     SmartDashboard.putData("Auto On", autoOn);
 
@@ -88,6 +95,12 @@ public class Robot extends TimedRobot {
     pneumatics.setArm1(Value.kReverse);
     pneumatics.setArm2(Value.kReverse);
     pneumatics.setManipulator(Value.kForward);
+
+    gyro.reset();
+    gyro.calibrate();
+
+    navx.reset();
+    navx.calibrate();
 
   }
 
@@ -140,6 +153,11 @@ public class Robot extends TimedRobot {
     m_timer.start();
     pneumatics.setManipulator(Value.kReverse);
 
+    gyro.reset();
+    navx.reset();
+    
+    drive.setBrakeMode(true);
+
     // auto = autoOn.getSelected();
 
   }
@@ -166,6 +184,19 @@ public class Robot extends TimedRobot {
         } else if (m_timer.get() < 5.5  && m_timer.get() > 2) {
           drive.updateSpeedArcade(-.5, 0); }
       }
+      case "Middle Auto": {
+        if (m_timer.get() < 2 && m_timer.get() > 0) {
+          drive.updateSpeedArcade(.5, 0);
+        } else if (m_timer.get() > 2) {
+          if (Math.abs(navx.getPitch()) < 25 && Math.abs(navx.getRoll()) < 25) {
+            drive.updateSpeedArcade(0, 0);
+          } else if (navx.getPitch() < -25) {
+            drive.updateSpeedArcade(-.2, 0);
+          } else if (navx.getPitch() < 25) {
+            drive.updateSpeedArcade(.2, 0);
+          }
+        }
+      }
       case "Auto Off": {
         drive.updateSpeedArcade(0, 0);
       }
@@ -176,6 +207,7 @@ public class Robot extends TimedRobot {
   @Override
   public void teleopInit() {
     m_timer.stop();
+    drive.setBrakeMode(false);
   }
 
   /** This function is called periodically during operator control. */
