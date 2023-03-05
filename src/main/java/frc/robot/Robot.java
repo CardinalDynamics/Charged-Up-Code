@@ -59,8 +59,11 @@ public class Robot extends TimedRobot {
   private SlewRateLimiter rateLimit1 = new SlewRateLimiter(.8);
   private SlewRateLimiter rateLimit2 = new SlewRateLimiter(.8);
 
-  private final SendableChooser<String> autoOn = new SendableChooser<>();
-  private String auto;
+  private final SendableChooser<Boolean> autoOn = new SendableChooser<>();
+  private final SendableChooser<Boolean> autoChoice = new SendableChooser<>();
+  
+  private boolean autoEnabled;
+  private boolean auto;
 
   /**
    * This function is run when the robot is first started up and should be used for any
@@ -72,10 +75,14 @@ public class Robot extends TimedRobot {
     // m_chooser.addOption("My Auto", kCustomAuto);
     // SmartDashboard.putData("Auto choices", m_chooser);
 
-    autoOn.setDefaultOption("Auto On", "Auto On");
-    autoOn.addOption("Middle Auto", "Middle Auto");
-    autoOn.addOption("Auto Off", "Auto Off");
+    autoOn.setDefaultOption("On", true);
+    autoOn.addOption("Off", false);
+    
+    autoChoice.setDefaultOption("Edge", true);
+    autoChoice.addOption("Middle", false);
+    
     SmartDashboard.putData("Auto On", autoOn);
+    SmartDashboard.putData("Auto Choice", autoChoice);
 
     navx = new AHRS();
 
@@ -91,9 +98,9 @@ public class Robot extends TimedRobot {
     driveMode = true;
     inverted = false;
 
-    pneumatics.setArm1(Value.kReverse);
-    pneumatics.setArm2(Value.kReverse);
-    pneumatics.setManipulator(Value.kForward);
+    // pneumatics.setArm1(Value.kReverse);
+    // pneumatics.setArm2(Value.kReverse);
+    // pneumatics.setManipulator(Value.kForward);
 
     // gyro.reset();
     // gyro.calibrate();
@@ -145,8 +152,15 @@ public class Robot extends TimedRobot {
    */
   @Override
   public void autonomousInit() {
-    auto = autoOn.getSelected();
-    auto = SmartDashboard.getString("Auto On", auto);
+    autoEnabled = autoOn.getSelected();
+    autoEnabled = SmartDashboard.getBoolean("Auto On", autoEnabled);
+
+    auto = autoChoice.getSelected();
+    auto = SmartDashboard.getBoolean("Auto Choice", auto);
+
+    System.out.println("Auto Enabled: " + autoEnabled);
+    System.out.println("Auto Choice: " + auto);
+
     // System.out.println("Auto selected: " + m_autoSelected);
     m_timer.reset();
     m_timer.start();
@@ -174,34 +188,39 @@ public class Robot extends TimedRobot {
     //   drive.updateSpeedArcade(-.25, 0);
     // }
 
-    // switch (auto) {
-    //   case "Auto On": {
+    if (autoEnabled == true) {
+      if (auto == true) {
         if (m_timer.get() < 1 && m_timer.get() > 0) {
           drive.updateSpeedArcade(-.3, 0);
         } else if (m_timer.get() < 2 && m_timer.get() > 1) {
           drive.updateSpeedArcade(.6, 0);
         } else if (m_timer.get() < 5.5  && m_timer.get() > 2) {
           drive.updateSpeedArcade(-.5, 0); }
-      // }
-      // case "Middle Auto": {
-      //   if (m_timer.get() < 2 && m_timer.get() > 0) {
-      //     drive.updateSpeedArcade(.5, 0);
-      //   }
-        // } else if (m_timer.get() > 2 && m_timer.get() < 15) {
-        //   if (Math.abs(navx.getPitch()) < 10 && Math.abs(navx.getRoll()) < 10) {
-        //     drive.updateSpeedArcade(0, 0);
-        //   } else if (navx.getPitch() < -10) {
-        //     drive.updateSpeedArcade(-.2, 0);
-        //   } else if (navx.getPitch() > 10) {
-        //     drive.updateSpeedArcade(.2, 0);
-        //   }
-        // }
-      // }
-      // case "Auto Off": {
-      //   drive.updateSpeedArcade(0, 0);
-      // }
+      } else if (auto == false) {
+        if (m_timer.get() < 2 && m_timer.get() > 0) {
+              // drive.updateSpeedArcade(.6, 0);
+              drive.updateSpeedArcade(0, 0);
+        } else if (m_timer.get() > 2) {
+            if (Math.abs(navx.getPitch()) < 10 && Math.abs(navx.getRoll()) < 10) {
+              drive.updateSpeedArcade(0, 0);
+            } else if (navx.getPitch() < -10) {
+              drive.updateSpeedArcade(.4, 0);
+            } else if (navx.getPitch() > 10) {
+              drive.updateSpeedArcade(-.4, 0);
+            }
+        }  
+      }
+    } else if (autoEnabled == false) {
+      drive.updateSpeedArcade(0, 0);
+    }
+        // if (m_timer.get() < 1 && m_timer.get() > 0) {
+        //   drive.updateSpeedArcade(-.3, 0);
+        // } else if (m_timer.get() < 2 && m_timer.get() > 1) {
+        //   drive.updateSpeedArcade(.6, 0);
+        // } else if (m_timer.get() < 5.5  && m_timer.get() > 2) {
+        //   drive.updateSpeedArcade(-.5, 0); }
+      
   }
-// }
 
   /** This function is called once when teleop is enabled. */
   @Override
